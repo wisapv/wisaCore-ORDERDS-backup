@@ -1,10 +1,26 @@
 @import "tailwindcss";
 
 @theme {
-  --color-wisa-dark:  #1a1a2e;
+  --color-wisa-dark:  #000000;
   --color-wisa-pink:  #e91e8c;
   --color-wisa-white: #f8f8f8;
 }
 
 * { box-sizing: border-box; }
 body { margin: 0; font-family: 'Segoe UI', sans-serif; }
+
+/* เพิ่มต่อท้ายใน index.css */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #f3f4f6;
+  border-radius: 20px;
+}
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background-color: #e5e7eb;
+}
