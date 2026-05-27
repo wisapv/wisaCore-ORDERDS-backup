@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@theme {
+  --color-wisa-dark:  #1a1a2e;
+  --color-wisa-pink:  #e91e8c;
+  --color-wisa-white: #f8f8f8;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; font-family: 'Segoe UI', sans-serif; }
