@@ -4,7 +4,16 @@
   "type": "module",
   "scripts": {
     "dev": "node --watch src/index.js",
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "test:address-master": "node src/minmax3month/services/addressMaster.vba-parity.test.js",
+    "test:nqc": "node src/minmax3month/services/nqc.vba-parity.test.js",
+    "test:parser": "node src/minmax3month/services/tableParser.vba-parity.test.js",
+    "test:part-master": "node src/minmax3month/services/partMaster.vba-parity.test.js",
+    "test:freq-lp": "node src/minmax3month/services/freqLp.vba-parity.test.js",
+    "test:order-summary": "node src/minmax3month/services/orderSummary.vba-parity.test.js",
+    "test:set-part": "node src/minmax3month/services/setPart.vba-parity.test.js",
+    "test:cal-base": "node src/minmax3month/services/calBase.vba-parity.test.js",
+    "test:minmax": "node src/minmax3month/services/minmax.vba-parity.test.js"
   },
   "dependencies": {
     "cors": "^2.8.6",
