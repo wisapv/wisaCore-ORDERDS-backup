@@ -13,6 +13,7 @@ export default function Sidebar() {
       <nav className="flex flex-col gap-1 w-full flex-1">
         <MenuItem to="/"         icon={<LayoutGrid size={20} />} label="Dashboard" />
         <MenuItem to="/capacity" icon={<Box size={20} />}        label="Capacity Flowrack" />
+        <MenuItem to="/minmax3month" icon={<BarChart3 size={20} />}  label="Min-Max 3 Month" />
         <MenuItem to="#"         icon={<User size={20} />}       label="HR"      hasDropdown />
         <MenuItem to="#"         icon={<Wallet size={20} />}     label="Tickets" />
         <MenuItem to="#"         icon={<BarChart3 size={20} />}  label="Reports" />

@@ -1,0 +1,3 @@
+export default function MinmaxWarnings({ warnings = [], alarms = [] }) {
+  return <>{warnings.length > 0 && <div className="bg-amber-500/10 border border-amber-400/20 text-amber-200 rounded-2xl p-4 text-sm"><p className="font-bold mb-2">Warnings</p><ul className="list-disc pl-5 space-y-1">{warnings.map((warning, index) => <li key={`warning-${index}`}>{typeof warning === 'string' ? warning : JSON.stringify(warning)}</li>)}</ul></div>}{alarms.length > 0 && <div className="bg-red-500/10 border border-red-400/20 text-red-200 rounded-2xl p-4 text-sm"><p className="font-bold mb-2">Alarms</p><ul className="list-disc pl-5 space-y-1">{alarms.map((alarm, index) => <li key={`alarm-${index}`}>{typeof alarm === 'string' ? alarm : JSON.stringify(alarm)}</li>)}</ul></div>}</>;
+}

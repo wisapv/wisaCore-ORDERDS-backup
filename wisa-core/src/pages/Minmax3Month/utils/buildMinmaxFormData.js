@@ -1,0 +1,14 @@
+import { REQUIRED_FILES, TARGET_DOCKS } from '../constants/minmaxConstants';
+
+export const buildMinmaxFormData = (files, config) => {
+  const formData = new FormData();
+  REQUIRED_FILES.forEach(({ key }) => {
+    if (files[key]) formData.append(key, files[key]);
+  });
+  formData.append('targetMonth', config.targetMonth);
+  formData.append('workingDayN1', config.workingDayN1);
+  formData.append('workingDayN2', config.workingDayN2);
+  formData.append('workingDayN3', config.workingDayN3);
+  formData.append('targetDocks', TARGET_DOCKS.join(','));
+  return formData;
+};
