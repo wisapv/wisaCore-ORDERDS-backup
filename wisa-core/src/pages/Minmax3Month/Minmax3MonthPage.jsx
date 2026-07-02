@@ -1,4 +1,4 @@
-import { CheckCircle2, Database, LoaderCircle, Server, XCircle } from 'lucide-react';
+import { CheckCircle2, Database, LoaderCircle, Play, Server, Sparkles, XCircle } from 'lucide-react';
 import Header from '../../components/Header.jsx';
 import MinmaxActionPanel from './components/MinmaxActionPanel.jsx';
 import MinmaxConfigPanel from './components/MinmaxConfigPanel.jsx';
@@ -6,7 +6,6 @@ import MinmaxResultCard from './components/MinmaxResultCard.jsx';
 import MinmaxSectionCard from './components/MinmaxSectionCard.jsx';
 import MinmaxStatusBadge from './components/MinmaxStatusBadge.jsx';
 import MinmaxUploadGrid from './components/MinmaxUploadGrid.jsx';
-import MinmaxWorkflowStepper from './components/MinmaxWorkflowStepper.jsx';
 import { REQUIRED_FILES, TARGET_DOCKS } from './constants/minmaxConstants.js';
 import { useMinmaxActions } from './hooks/useMinmaxActions.js';
 import { useMinmaxFiles } from './hooks/useMinmaxFiles.js';
@@ -26,10 +25,9 @@ const RESULT_CARDS = [
   ['addressMaster', 'AddressMaster Processing', 'Awaiting AddressMaster processing'],
 ];
 
-function HealthIcon({ status }) {
-  if (status === 'loading') return <LoaderCircle className="animate-spin text-slate-400" size={20} />;
-  if (status === 'connected') return <CheckCircle2 className="text-emerald-500" size={20} />;
-  return <XCircle className="text-red-500" size={20} />;
+function HealthStatus({ health }) {
+  const icon = health.status === 'loading' ? <LoaderCircle className="animate-spin text-white/60" size={20} /> : health.status === 'connected' ? <CheckCircle2 className="text-emerald-400" size={20} /> : <XCircle className="text-red-400" size={20} />;
+  return <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-black/50 p-3">{icon}<span className="text-sm font-semibold text-white">{health.message}</span></div>;
 }
 
 export default function Minmax3MonthPage() {
@@ -37,45 +35,49 @@ export default function Minmax3MonthPage() {
   const { files, config, handleFileChange, handleConfigChange } = useMinmaxFiles();
   const { actions, results, loading, anyLoading } = useMinmaxActions(files, config);
   const selectedCount = Object.values(files).filter(Boolean).length;
+  const validateAction = actions.find((action) => action.key === 'validation');
 
   return (
     <div className="min-h-full bg-slate-50 text-slate-950">
       <Header title="Min-Max 3 Month" />
-      <main className="flex flex-col gap-6 p-4 md:p-6">
-        <section className="overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-sm">
-          <div className="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr]">
-            <div className="relative overflow-hidden bg-slate-950 p-6 text-white md:p-8">
-              <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-wisa-pink/20 blur-3xl" />
-              <div className="relative z-10 max-w-3xl">
-                <MinmaxStatusBadge tone="dark">VBA-Parity Module</MinmaxStatusBadge>
-                <h1 className="mt-5 text-3xl font-black tracking-tight md:text-5xl">Min-Max 3 Month</h1>
-                <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 md:text-base">Upload source files, validate inputs, audit RouteCode, and calculate Min-Max formulas.</p>
-                <div className="mt-6 flex flex-wrap gap-2">{TARGET_DOCKS.map((dock) => <span key={dock} className="rounded-full border border-wisa-pink/30 bg-wisa-pink/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-pink-100">Dock {dock}</span>)}</div>
-              </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 shrink-0">
+        <div className="xl:col-span-2 relative overflow-hidden bg-[#111111] border border-white/10 rounded-[32px] p-6 shadow-2xl flex flex-col justify-center group">
+          <div className="absolute -top-24 -right-24 w-64 h-64 bg-wisa-pink/10 rounded-full blur-3xl opacity-50 group-hover:bg-wisa-pink/20 transition-all duration-700"></div>
+          <div className="relative z-10 flex flex-col gap-5">
+            <div>
+              <span className="text-wisa-pink text-[10px] font-bold tracking-[0.2em] uppercase mb-2 flex items-center gap-1.5"><Sparkles size={12} /> Min-Max Operation</span>
+              <h1 className="text-white font-semibold text-xl md:text-2xl tracking-wide">Min-Max 3 Month</h1>
+              <p className="text-white/45 text-xs md:text-sm mt-2 max-w-2xl">Upload source files, validate inputs, audit RouteCode, and calculate formulas.</p>
             </div>
-            <div className="grid gap-4 p-5 md:grid-cols-3 xl:grid-cols-1 xl:p-6">
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4"><p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Backend status</p><div className="mt-3 flex items-center gap-3"><HealthIcon status={health.status} /><span className="text-sm font-bold text-slate-900">{health.message}</span></div></div>
-              <div className="rounded-3xl border border-slate-200 bg-white p-4"><p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Module</p><div className="mt-3 flex items-center gap-2 text-sm font-bold text-slate-950"><Server size={17} className="text-wisa-pink" />{health.moduleName}</div></div>
-              <div className="rounded-3xl border border-slate-200 bg-white p-4"><p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Required files</p><div className="mt-3 flex items-center gap-2 text-sm font-bold text-slate-950"><Database size={17} className="text-wisa-pink" />{selectedCount}/{REQUIRED_FILES.length} selected</div></div>
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 w-fit"><Database size={18} className="text-wisa-pink" /><span className="text-sm font-bold text-white">{selectedCount}/{REQUIRED_FILES.length} selected</span><span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/35">Required files</span></div>
+              <div className="flex flex-wrap gap-2">{TARGET_DOCKS.map((dock) => <span key={dock} className="bg-wisa-pink/10 text-wisa-pink border border-wisa-pink/30 px-3 py-1.5 rounded-xl text-[10px] font-bold tracking-widest uppercase">{dock}</span>)}</div>
             </div>
           </div>
-        </section>
-
-        <MinmaxSectionCard eyebrow="Operational workflow" title="Run sequence" description="Follow the recommended path from upload through validation, Cal Base staging, RouteCode audit, and final Min-Max calculation.">
-          <MinmaxWorkflowStepper results={results} loading={loading} files={files} />
-        </MinmaxSectionCard>
-
-        <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[1.25fr_0.75fr]">
-          <MinmaxSectionCard eyebrow="Required files" title="Source file upload" description="Each card maps to one backend form-data key. Choose a file from the card or drop it on the browser picker target."><MinmaxUploadGrid files={files} onFileChange={handleFileChange} /></MinmaxSectionCard>
-          <MinmaxSectionCard eyebrow="Setup" title="Calculation configuration" description="Set the target month and working-day assumptions used by the existing Min-Max workflow."><MinmaxConfigPanel config={config} onConfigChange={handleConfigChange} /></MinmaxSectionCard>
         </div>
 
-        <MinmaxSectionCard eyebrow="Actions" title="Workflow controls" description="Primary actions are ordered for operators. Detailed individual file processors remain available under advanced stage tools."><MinmaxActionPanel actions={actions} loading={loading} disabled={anyLoading} /></MinmaxSectionCard>
-
-        <div className="grid grid-cols-1 gap-6">
-          {RESULT_CARDS.map(([key, title, emptyText, important]) => <MinmaxResultCard key={key} title={title} result={results[key]} emptyText={emptyText} important={important} />)}
+        <div className="xl:col-span-1 bg-[#111111] border border-white/10 rounded-[32px] p-6 shadow-2xl flex flex-col gap-4 relative overflow-hidden">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-white/40 text-[10px] font-bold tracking-[0.2em] uppercase">Backend & Setup</span>
+            <MinmaxStatusBadge tone="dark"><Server size={12} className="mr-1" /> {health.moduleName}</MinmaxStatusBadge>
+          </div>
+          <HealthStatus health={health} />
+          <MinmaxConfigPanel config={config} onConfigChange={handleConfigChange} variant="dark" showDocks={false} />
+          {validateAction && <button type="button" onClick={validateAction.onClick} disabled={anyLoading} className="w-full bg-wisa-pink text-white py-4 rounded-2xl text-sm font-bold tracking-widest uppercase hover:shadow-[0_0_24px_rgba(233,30,140,0.4)] hover:bg-pink-500 transition-all duration-300 disabled:opacity-50 disabled:hover:shadow-none flex items-center justify-center gap-2">{loading.validation ? <><LoaderCircle className="animate-spin" size={16} /> {validateAction.loadingLabel}</> : <><Play size={16} fill="currentColor" /> Validate Files</>}</button>}
         </div>
-      </main>
+
+      <MinmaxSectionCard eyebrow="Required Files" title="Source Files" description="Upload the six required source files. Cards stay light for readability while preserving pink selected states.">
+        <MinmaxUploadGrid files={files} onFileChange={handleFileChange} />
+      </MinmaxSectionCard>
+
+      <MinmaxSectionCard eyebrow="Workflow" title="Operational Actions" description="Run the recommended flow left to right. Advanced individual processors are available for stage-level checks.">
+        <MinmaxActionPanel actions={actions} loading={loading} disabled={anyLoading} />
+      </MinmaxSectionCard>
+
+      <div className="grid grid-cols-1 gap-6 pb-6">
+        {RESULT_CARDS.map(([key, title, emptyText, important]) => <MinmaxResultCard key={key} title={title} result={results[key]} emptyText={emptyText} important={important} />)}
+      </div>
     </div>
   );
 }

@@ -28,12 +28,5 @@ export const REQUIRED_FILES = [
   { key: 'orderSummary', label: 'Order Summary', fileName: 'Order Summary.txt', accept: '.txt', typeLabel: 'TXT source file' },
   { key: 'setPart', label: 'SetPart', fileName: 'SetPart.txt', accept: '.txt', typeLabel: 'TXT source file' },
 ];
-export const WORKFLOW_STEPS = [
-  { key: 'validation', label: 'Upload Files', description: 'Select all required sources' },
-  { key: 'preview', label: 'Validate & Preview', description: 'Check files before staging' },
-  { key: 'calBase', label: 'Process Cal Base', description: 'Build the calculation base' },
-  { key: 'routeAudit', label: 'Audit RouteCode', description: 'Confirm routing confidence' },
-  { key: 'minmax', label: 'Calculate Min-Max', description: 'Run final formulas' },
-];
 export const PRIMARY_ACTION_KEYS = ['validation', 'preview', 'calBase', 'routeAudit', 'minmax'];
 export const INITIAL_FILES = REQUIRED_FILES.reduce((files, item) => ({ ...files, [item.key]: null }), {});
