@@ -72,7 +72,7 @@ export default function Minmax3MonthPage() {
   const validateAction = actions.find((action) => action.key === 'validation');
 
   return (
-    <div className="flex flex-col h-full gap-6">
+    <div className="min-h-full bg-slate-50 text-slate-950">
       <Header title="Min-Max 3 Month" />
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 shrink-0">
@@ -126,7 +126,6 @@ export default function Minmax3MonthPage() {
           <MinmaxConfigPanel config={config} onConfigChange={handleConfigChange} variant="dark" showDocks={false} />
           <ValidateButton action={validateAction} isLoading={loading.validation} disabled={anyLoading} />
         </div>
-      </div>
 
       <MinmaxSectionCard
         eyebrow="Required Files"
