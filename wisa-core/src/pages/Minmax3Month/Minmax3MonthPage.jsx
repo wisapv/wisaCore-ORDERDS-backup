@@ -38,7 +38,7 @@ export default function Minmax3MonthPage() {
   const validateAction = actions.find((action) => action.key === 'validation');
 
   return (
-    <div className="flex flex-col h-full gap-6">
+    <div className="min-h-full bg-slate-50 text-slate-950">
       <Header title="Min-Max 3 Month" />
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 shrink-0">
@@ -66,7 +66,6 @@ export default function Minmax3MonthPage() {
           <MinmaxConfigPanel config={config} onConfigChange={handleConfigChange} variant="dark" showDocks={false} />
           {validateAction && <button type="button" onClick={validateAction.onClick} disabled={anyLoading} className="w-full bg-wisa-pink text-white py-4 rounded-2xl text-sm font-bold tracking-widest uppercase hover:shadow-[0_0_24px_rgba(233,30,140,0.4)] hover:bg-pink-500 transition-all duration-300 disabled:opacity-50 disabled:hover:shadow-none flex items-center justify-center gap-2">{loading.validation ? <><LoaderCircle className="animate-spin" size={16} /> {validateAction.loadingLabel}</> : <><Play size={16} fill="currentColor" /> Validate Files</>}</button>}
         </div>
-      </div>
 
       <MinmaxSectionCard eyebrow="Required Files" title="Source Files" description="Upload the six required source files. Cards stay light for readability while preserving pink selected states.">
         <MinmaxUploadGrid files={files} onFileChange={handleFileChange} />
