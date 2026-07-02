@@ -13,7 +13,8 @@
     "test:order-summary": "node src/minmax3month/services/orderSummary.vba-parity.test.js",
     "test:set-part": "node src/minmax3month/services/setPart.vba-parity.test.js",
     "test:cal-base": "node src/minmax3month/services/calBase.vba-parity.test.js",
-    "test:minmax": "node src/minmax3month/services/minmax.vba-parity.test.js"
+    "test:minmax": "node src/minmax3month/services/minmax.vba-parity.test.js",
+    "test:route-audit": "node src/minmax3month/services/routeAudit.vba-parity.test.js"
   },
   "dependencies": {
     "cors": "^2.8.6",

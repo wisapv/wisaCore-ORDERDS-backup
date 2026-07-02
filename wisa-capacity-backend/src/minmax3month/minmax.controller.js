@@ -4,7 +4,7 @@ import { parseNqcMinmax, processNqc } from './services/nqcMinmax.service.js';
 import { parseOrderSummary, processOrderSummary } from './services/orderSummary.service.js';
 import { parsePartMaster, processPartMaster } from './services/partMaster.service.js';
 import { parseSetPart, processSetPart } from './services/setPart.service.js';
-import { calculateMinMax, processCalBase } from './services/minmax.service.js';
+import { auditRouteCode, calculateMinMax, processCalBase } from './services/minmax.service.js';
 import { getUploadFileSummary, validateMinmaxUpload } from './validators/minmax.validator.js';
 
 export const healthCheck = (_req, res) => {
@@ -460,5 +460,40 @@ export const calculateMinMaxUpload = (req, res) => {
       message: 'Min-Max calculation failed',
       errors: [error.message],
     });
+  }
+};
+
+
+export const auditRouteCodeUpload = (req, res) => {
+  const { errors } = validateMinmaxUpload({ files: req.files, body: req.body });
+
+  if (errors.length) {
+    return res.status(400).json({ success: false, message: 'RouteCode audit failed', errors });
+  }
+
+  try {
+    const result = auditRouteCode({
+      files: req.files,
+      targetMonth: req.body.targetMonth,
+      workingDayN1: req.body.workingDayN1,
+      workingDayN2: req.body.workingDayN2,
+      workingDayN3: req.body.workingDayN3,
+      targetDocks: req.body.targetDocks,
+    });
+
+    if (result.errors?.length) {
+      return res.status(400).json({ success: false, message: result.message || 'RouteCode audit failed', errors: result.errors, warnings: result.warnings || [] });
+    }
+
+    return res.json({
+      success: true,
+      message: 'RouteCode audit completed',
+      summary: result.summary,
+      candidates: result.candidates,
+      recommendation: result.recommendation,
+      warnings: result.warnings,
+    });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: 'RouteCode audit failed', errors: [error.message] });
   }
 };

@@ -381,11 +381,12 @@ VBA-equivalent flow:
 2. If Cal Base fails with a strict process error, stop and return that structured error.
 3. Formula calculations start from Cal Base rows and must calculate `N+1`, `N+2`, and `N+3` separately.
 4. `MaxNqcPerDay` is trace only in this stage unless later VBA review proves otherwise.
-5. Route code is derived only from `P/C Add` or an explicitly equivalent source field:
-   - `PC` -> route `1`
-   - `S/Direct` -> route `2`
-   - `D/Sequence` -> route `3`
-6. If RouteCode cannot be resolved, set `RouteCode = null`, add `ROUTE_CODE_UNRESOLVED`, and do not guess from unrelated fields.
+5. Route code is derived only from `P/C Add` or an explicitly equivalent source field using the original VBA pattern:
+   - source value equal to `Error` -> route `Err` / route code `Err`
+   - second character `-` -> route `PC` / route code `1`
+   - first character `S` -> route `S` / route code `2`
+   - otherwise -> route `D` / route code `3`
+6. If RouteCode cannot be resolved because `P/C Add` is blank or unavailable, set `RouteCode = null`, add `ROUTE_CODE_UNRESOLVED`, and do not guess from unrelated fields.
 7. Safety trace values are:
    - `PCSafetyTime = PC SAFETY`
    - `LSSafetyTime = LS SAFTY`
@@ -421,3 +422,34 @@ Formula status:
 - `OK` if required values exist and formulas complete.
 - `WARNING` if lookup warnings exist but formulas complete.
 - `ERROR` if formulas cannot calculate because required values are missing or invalid.
+
+## 14. RouteCode audit and safety patch requirements
+
+Before Excel export, the web app must provide a RouteCode audit endpoint that reuses a fresh Cal Base run and reports candidate source fields for VBA route derivation. Export must not be implemented until RouteCode audit has been checked with real files.
+
+Original VBA route formula:
+
+- `ROUTE = IF(P/C Add="Error","Err", IF(MID(P/C Add,2,1)="-","PC", IF(LEFT(P/C Add,1)="S","S","D")))`
+- `ROUTE CODE = IF(ROUTE="Err","Err", IF(ROUTE="PC",1, IF(ROUTE="S",2,3)))`
+
+Route is derived from the P/C Add pattern, not exact words such as `S/Direct` or `D/Sequence`.
+
+Named formula constants:
+
+- `WORKING_MINS_PER_DAY = 920`
+- `SAFETY_RATIO_BUFFER = 0.0005`
+- `ROUTE1_LS_MAX_FIXED_FREQ = 24`
+- `SH_FIXED_ORDER_FREQ = 8`
+- `DISPLAY_DASH = "-"`
+- `DISPLAY_NO_DATA = "NO Data"`
+- `DISPLAY_ERROR = "Err"`
+
+Formula output fields may be mixed values:
+
+- `number | "-" | "NO Data" | "Err" | null`
+
+Frontend result tables must safely render mixed values, arrays, and objects. RouteCode `3` means Direct Sequence, and LS Min/Max must be `"-"` for that route.
+
+## 15. Merge conflict resolution guardrail
+
+When resolving merge conflicts for this module, keep the latest Min-Max 3 Month VBA-parity implementation for Min-Max files, including RouteCode audit, the P/C Add route pattern, named formula constants, mixed output values, and the refactored frontend structure. Existing Capacity Flowrack behavior must be preserved unchanged.
