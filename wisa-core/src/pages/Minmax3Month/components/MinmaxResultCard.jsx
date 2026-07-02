@@ -1,7 +1,7 @@
 import { FileSpreadsheet } from 'lucide-react';
-import MinmaxPreviewTable from './MinmaxPreviewTable';
-import MinmaxSummary from './MinmaxSummary';
-import MinmaxWarnings from './MinmaxWarnings';
+import MinmaxPreviewTable from './MinmaxPreviewTable.jsx';
+import MinmaxSummary from './MinmaxSummary.jsx';
+import MinmaxWarnings from './MinmaxWarnings.jsx';
 
 export default function MinmaxResultCard({ title, result, emptyText }) {
   const rows = result?.rows || [];

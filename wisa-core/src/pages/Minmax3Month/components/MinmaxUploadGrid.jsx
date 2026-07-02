@@ -1,5 +1,5 @@
 import { UploadCloud } from 'lucide-react';
-import { REQUIRED_FILES } from '../constants/minmaxConstants';
+import { REQUIRED_FILES } from '../constants/minmaxConstants.js';
 
 export default function MinmaxUploadGrid({ files, onFileChange }) {
   return (

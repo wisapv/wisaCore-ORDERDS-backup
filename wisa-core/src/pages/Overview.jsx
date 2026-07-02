@@ -1,4 +1,4 @@
-import Header from '../components/Header';
+import Header from '../components/Header.jsx';
 import bgFloral from '../assets/floral-bg.jpg';
 
 const STATS = [
