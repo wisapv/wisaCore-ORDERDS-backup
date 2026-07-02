@@ -1,4 +1,4 @@
-import { REQUIRED_FILES, TARGET_DOCKS } from '../constants/minmaxConstants';
+import { REQUIRED_FILES, TARGET_DOCKS } from '../constants/minmaxConstants.js';
 
 export const buildMinmaxFormData = (files, config) => {
   const formData = new FormData();

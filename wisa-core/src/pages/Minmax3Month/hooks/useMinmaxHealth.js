@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { HEALTH_URL } from '../constants/minmaxConstants';
+import { HEALTH_URL } from '../constants/minmaxConstants.js';
 
 export function useMinmaxHealth() {
   const [health, setHealth] = useState({ status: 'loading', message: 'Checking backend connection...', moduleName: 'minmax3month' });

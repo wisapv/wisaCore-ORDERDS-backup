@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Header from '../../components/Header';
+import Header from '../../components/Header.jsx';
 import { UploadCloud, Play, FileSpreadsheet, Sparkles, Download } from 'lucide-react';
 
 export default function CapacityPage() {

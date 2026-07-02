@@ -1,4 +1,4 @@
-import renderCellValue from '../utils/renderCellValue';
+import renderCellValue from '../utils/renderCellValue.jsx';
 
 export default function MinmaxPreviewTable({ title, rows = [], columns }) {
   const visibleRows = rows.slice(0, 20);
