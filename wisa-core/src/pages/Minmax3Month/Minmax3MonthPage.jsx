@@ -26,14 +26,19 @@ const RESULT_CARDS = [
 ];
 
 function HealthStatus({ health }) {
-  const iconByStatus = {
-    connected: <CheckCircle2 className="text-emerald-400" size={20} />,
-    loading: <LoaderCircle className="animate-spin text-white/60" size={20} />,
-  };
+  let icon = <XCircle className="text-red-400" size={20} />;
+
+  if (health.status === 'connected') {
+    icon = <CheckCircle2 className="text-emerald-400" size={20} />;
+  }
+
+  if (health.status === 'loading') {
+    icon = <LoaderCircle className="animate-spin text-white/60" size={20} />;
+  }
 
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-black/50 p-3">
-      {iconByStatus[health.status] || <XCircle className="text-red-400" size={20} />}
+      {icon}
       <span className="text-sm font-semibold text-white">{health.message}</span>
     </div>
   );
@@ -50,15 +55,15 @@ function ValidateButton({ action, isLoading, disabled }) {
       className="w-full bg-wisa-pink text-white py-4 rounded-2xl text-sm font-bold tracking-widest uppercase hover:shadow-[0_0_24px_rgba(233,30,140,0.4)] hover:bg-pink-500 transition-all duration-300 disabled:opacity-50 disabled:hover:shadow-none flex items-center justify-center gap-2"
     >
       {isLoading ? (
-        <>
+        <span className="flex items-center justify-center gap-2">
           <LoaderCircle className="animate-spin" size={16} />
           {action.loadingLabel}
-        </>
+        </span>
       ) : (
-        <>
+        <span className="flex items-center justify-center gap-2">
           <Play size={16} fill="currentColor" />
           Validate Files
-        </>
+        </span>
       )}
     </button>
   );
@@ -69,6 +74,7 @@ export default function Minmax3MonthPage() {
   const { files, config, handleFileChange, handleConfigChange } = useMinmaxFiles();
   const { actions, results, loading, anyLoading } = useMinmaxActions(files, config);
   const selectedCount = Object.values(files).filter(Boolean).length;
+  const selectedFileLabel = `${selectedCount}/${REQUIRED_FILES.length} selected`;
   const validateAction = actions.find((action) => action.key === 'validation');
 
   return (
@@ -94,7 +100,7 @@ export default function Minmax3MonthPage() {
               <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 w-fit">
                 <Database size={18} className="text-wisa-pink" />
                 <span className="text-sm font-bold text-white">
-                  {selectedCount}/{REQUIRED_FILES.length} selected
+                  {selectedFileLabel}
                 </span>
                 <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/35">Required files</span>
               </div>
