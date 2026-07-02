@@ -449,3 +449,7 @@ Formula output fields may be mixed values:
 - `number | "-" | "NO Data" | "Err" | null`
 
 Frontend result tables must safely render mixed values, arrays, and objects. RouteCode `3` means Direct Sequence, and LS Min/Max must be `"-"` for that route.
+
+## 15. Merge conflict resolution guardrail
+
+When resolving merge conflicts for this module, keep the latest Min-Max 3 Month VBA-parity implementation for Min-Max files, including RouteCode audit, the P/C Add route pattern, named formula constants, mixed output values, and the refactored frontend structure. Existing Capacity Flowrack behavior must be preserved unchanged.
