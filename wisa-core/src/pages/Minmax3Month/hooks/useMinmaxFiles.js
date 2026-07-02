@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { INITIAL_FILES } from '../constants/minmaxConstants';
+import { INITIAL_FILES } from '../constants/minmaxConstants.js';
 
 export function useMinmaxFiles() {
   const [files, setFiles] = useState(INITIAL_FILES);

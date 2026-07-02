@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import MainLayout from './layouts/MainLayout';
-import Overview from './pages/Overview';
-import CapacityPage from './pages/Capacity/CapacityPage';
-import Minmax3MonthPage from './pages/Minmax3Month/Minmax3MonthPage';
+import MainLayout from './layouts/MainLayout.jsx';
+import Overview from './pages/Overview.jsx';
+import CapacityPage from './pages/Capacity/CapacityPage.jsx';
+import Minmax3MonthPage from './pages/Minmax3Month/Minmax3MonthPage.jsx';
 import './App.css';
 
 export default function App() {

@@ -1,13 +1,13 @@
 import { Activity, CheckCircle2, LoaderCircle, Server, XCircle } from 'lucide-react';
-import Header from '../../components/Header';
-import MinmaxActionPanel from './components/MinmaxActionPanel';
-import MinmaxConfigPanel from './components/MinmaxConfigPanel';
-import MinmaxResultCard from './components/MinmaxResultCard';
-import MinmaxUploadGrid from './components/MinmaxUploadGrid';
-import { TARGET_DOCKS } from './constants/minmaxConstants';
-import { useMinmaxActions } from './hooks/useMinmaxActions';
-import { useMinmaxFiles } from './hooks/useMinmaxFiles';
-import { useMinmaxHealth } from './hooks/useMinmaxHealth';
+import Header from '../../components/Header.jsx';
+import MinmaxActionPanel from './components/MinmaxActionPanel.jsx';
+import MinmaxConfigPanel from './components/MinmaxConfigPanel.jsx';
+import MinmaxResultCard from './components/MinmaxResultCard.jsx';
+import MinmaxUploadGrid from './components/MinmaxUploadGrid.jsx';
+import { TARGET_DOCKS } from './constants/minmaxConstants.js';
+import { useMinmaxActions } from './hooks/useMinmaxActions.js';
+import { useMinmaxFiles } from './hooks/useMinmaxFiles.js';
+import { useMinmaxHealth } from './hooks/useMinmaxHealth.js';
 
 const RESULT_CARDS = [
   ['validation', 'Validation Result', 'Awaiting upload validation'],
