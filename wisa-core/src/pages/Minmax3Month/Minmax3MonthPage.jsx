@@ -1,10 +1,13 @@
-import { Activity, CheckCircle2, LoaderCircle, Server, XCircle } from 'lucide-react';
+import { CheckCircle2, Database, LoaderCircle, Server, XCircle } from 'lucide-react';
 import Header from '../../components/Header.jsx';
 import MinmaxActionPanel from './components/MinmaxActionPanel.jsx';
 import MinmaxConfigPanel from './components/MinmaxConfigPanel.jsx';
 import MinmaxResultCard from './components/MinmaxResultCard.jsx';
+import MinmaxSectionCard from './components/MinmaxSectionCard.jsx';
+import MinmaxStatusBadge from './components/MinmaxStatusBadge.jsx';
 import MinmaxUploadGrid from './components/MinmaxUploadGrid.jsx';
-import { TARGET_DOCKS } from './constants/minmaxConstants.js';
+import MinmaxWorkflowStepper from './components/MinmaxWorkflowStepper.jsx';
+import { REQUIRED_FILES, TARGET_DOCKS } from './constants/minmaxConstants.js';
 import { useMinmaxActions } from './hooks/useMinmaxActions.js';
 import { useMinmaxFiles } from './hooks/useMinmaxFiles.js';
 import { useMinmaxHealth } from './hooks/useMinmaxHealth.js';
@@ -12,53 +15,67 @@ import { useMinmaxHealth } from './hooks/useMinmaxHealth.js';
 const RESULT_CARDS = [
   ['validation', 'Validation Result', 'Awaiting upload validation'],
   ['preview', 'Preview Result', 'Awaiting file preview'],
+  ['calBase', 'Cal Base Processing', 'Awaiting Cal Base processing'],
+  ['routeAudit', 'RouteCode Audit', 'Awaiting RouteCode audit', true],
+  ['minmax', 'Min-Max Calculation', 'Awaiting Min-Max calculation'],
   ['nqc', 'NQC Processing', 'Awaiting NQC processing'],
   ['partMaster', 'PartMaster Processing', 'Awaiting PartMaster processing'],
   ['freqLp', 'Freq_LP Processing', 'Awaiting Freq_LP processing'],
   ['orderSummary', 'Order Summary / BoxLayer Processing', 'Awaiting Order Summary processing'],
   ['setPart', 'SetPart Processing', 'Awaiting SetPart processing'],
-  ['calBase', 'Cal Base Processing', 'Awaiting Cal Base processing'],
-  ['minmax', 'Min-Max Calculation', 'Awaiting Min-Max calculation'],
-  ['routeAudit', 'RouteCode Audit', 'Awaiting RouteCode audit'],
   ['addressMaster', 'AddressMaster Processing', 'Awaiting AddressMaster processing'],
 ];
+
+function HealthIcon({ status }) {
+  if (status === 'loading') return <LoaderCircle className="animate-spin text-slate-400" size={20} />;
+  if (status === 'connected') return <CheckCircle2 className="text-emerald-500" size={20} />;
+  return <XCircle className="text-red-500" size={20} />;
+}
 
 export default function Minmax3MonthPage() {
   const health = useMinmaxHealth();
   const { files, config, handleFileChange, handleConfigChange } = useMinmaxFiles();
   const { actions, results, loading, anyLoading } = useMinmaxActions(files, config);
-  const isConnected = health.status === 'connected';
-  const isLoading = health.status === 'loading';
+  const selectedCount = Object.values(files).filter(Boolean).length;
 
   return (
-    <div className="flex flex-col h-full gap-6">
+    <div className="min-h-full bg-slate-50 text-slate-950">
       <Header title="Min-Max 3 Month" />
-
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 shrink-0">
-        <div className="xl:col-span-2 relative overflow-hidden bg-[#111111] border border-white/10 rounded-[32px] p-6 shadow-2xl flex flex-col justify-center group min-h-48">
-          <div className="absolute -top-24 -right-24 w-64 h-64 bg-wisa-pink/10 rounded-full blur-3xl opacity-50 group-hover:bg-wisa-pink/20 transition-all duration-700"></div>
-          <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
-            <div className="flex-shrink-0 flex items-center justify-center w-20 h-20 bg-white/5 border border-white/10 rounded-[24px]"><Activity className="text-wisa-pink" size={32} strokeWidth={1.5} /></div>
-            <div className="flex flex-col w-full text-center md:text-left"><span className="text-wisa-pink text-[10px] font-bold tracking-[0.2em] uppercase mb-1">VBA-Parity Workflow</span><span className="text-white font-medium text-lg md:text-xl">Min-Max 3 Month Calculation</span><span className="text-white/40 text-xs mt-1">Upload, validate, audit RouteCode, stage Cal Base, and calculate Min-Max formulas.</span></div>
+      <main className="flex flex-col gap-6 p-4 md:p-6">
+        <section className="overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-sm">
+          <div className="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr]">
+            <div className="relative overflow-hidden bg-slate-950 p-6 text-white md:p-8">
+              <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-wisa-pink/20 blur-3xl" />
+              <div className="relative z-10 max-w-3xl">
+                <MinmaxStatusBadge tone="dark">VBA-Parity Module</MinmaxStatusBadge>
+                <h1 className="mt-5 text-3xl font-black tracking-tight md:text-5xl">Min-Max 3 Month</h1>
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 md:text-base">Upload source files, validate inputs, audit RouteCode, and calculate Min-Max formulas.</p>
+                <div className="mt-6 flex flex-wrap gap-2">{TARGET_DOCKS.map((dock) => <span key={dock} className="rounded-full border border-wisa-pink/30 bg-wisa-pink/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-pink-100">Dock {dock}</span>)}</div>
+              </div>
+            </div>
+            <div className="grid gap-4 p-5 md:grid-cols-3 xl:grid-cols-1 xl:p-6">
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4"><p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Backend status</p><div className="mt-3 flex items-center gap-3"><HealthIcon status={health.status} /><span className="text-sm font-bold text-slate-900">{health.message}</span></div></div>
+              <div className="rounded-3xl border border-slate-200 bg-white p-4"><p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Module</p><div className="mt-3 flex items-center gap-2 text-sm font-bold text-slate-950"><Server size={17} className="text-wisa-pink" />{health.moduleName}</div></div>
+              <div className="rounded-3xl border border-slate-200 bg-white p-4"><p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Required files</p><div className="mt-3 flex items-center gap-2 text-sm font-bold text-slate-950"><Database size={17} className="text-wisa-pink" />{selectedCount}/{REQUIRED_FILES.length} selected</div></div>
+            </div>
           </div>
-        </div>
-        <div className="xl:col-span-1 bg-[#111111] border border-white/10 rounded-[32px] p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden">
-          <div className="flex flex-col mb-6"><span className="text-white/40 text-[10px] font-bold tracking-[0.2em] uppercase mb-3">Backend Connection</span><div className="bg-black/50 border border-white/5 rounded-2xl p-4 flex items-center gap-3">{isLoading && <LoaderCircle className="text-white/60 animate-spin" size={22} />}{isConnected && <CheckCircle2 className="text-emerald-400" size={22} />}{!isLoading && !isConnected && <XCircle className="text-red-400" size={22} />}<span className="text-white font-semibold text-sm">{health.message}</span></div></div>
-          <div className="flex items-center gap-2 bg-wisa-pink/10 text-wisa-pink border border-wisa-pink/20 px-4 py-3 rounded-2xl text-xs font-bold tracking-widest uppercase"><Server size={16} /> {health.moduleName}</div>
-        </div>
-      </div>
+        </section>
 
-      <div className="bg-[#111111] border border-white/10 rounded-[32px] p-6 md:p-8 shadow-2xl relative overflow-hidden">
-        <div className="absolute -bottom-28 -left-28 w-72 h-72 bg-wisa-pink/5 rounded-full blur-3xl"></div>
-        <div className="relative z-10 flex flex-col gap-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"><div><span className="text-wisa-pink text-[10px] font-bold tracking-[0.2em] uppercase">Required Files</span><h2 className="text-lg md:text-xl font-bold text-white tracking-wide mt-1">Source File Upload</h2></div><div className="flex flex-wrap gap-2">{TARGET_DOCKS.map((dock) => <span key={dock} className="bg-wisa-pink/10 text-wisa-pink border border-wisa-pink/30 px-3 py-1.5 rounded-xl text-[10px] font-bold tracking-widest uppercase">{dock}</span>)}</div></div>
-          <MinmaxUploadGrid files={files} onFileChange={handleFileChange} />
-          <MinmaxConfigPanel config={config} onConfigChange={handleConfigChange} />
-          <MinmaxActionPanel actions={actions} loading={loading} disabled={anyLoading} />
-        </div>
-      </div>
+        <MinmaxSectionCard eyebrow="Operational workflow" title="Run sequence" description="Follow the recommended path from upload through validation, Cal Base staging, RouteCode audit, and final Min-Max calculation.">
+          <MinmaxWorkflowStepper results={results} loading={loading} files={files} />
+        </MinmaxSectionCard>
 
-      {RESULT_CARDS.map(([key, title, emptyText]) => <MinmaxResultCard key={key} title={title} result={results[key]} emptyText={emptyText} />)}
+        <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[1.25fr_0.75fr]">
+          <MinmaxSectionCard eyebrow="Required files" title="Source file upload" description="Each card maps to one backend form-data key. Choose a file from the card or drop it on the browser picker target."><MinmaxUploadGrid files={files} onFileChange={handleFileChange} /></MinmaxSectionCard>
+          <MinmaxSectionCard eyebrow="Setup" title="Calculation configuration" description="Set the target month and working-day assumptions used by the existing Min-Max workflow."><MinmaxConfigPanel config={config} onConfigChange={handleConfigChange} /></MinmaxSectionCard>
+        </div>
+
+        <MinmaxSectionCard eyebrow="Actions" title="Workflow controls" description="Primary actions are ordered for operators. Detailed individual file processors remain available under advanced stage tools."><MinmaxActionPanel actions={actions} loading={loading} disabled={anyLoading} /></MinmaxSectionCard>
+
+        <div className="grid grid-cols-1 gap-6">
+          {RESULT_CARDS.map(([key, title, emptyText, important]) => <MinmaxResultCard key={key} title={title} result={results[key]} emptyText={emptyText} important={important} />)}
+        </div>
+      </main>
     </div>
   );
 }
