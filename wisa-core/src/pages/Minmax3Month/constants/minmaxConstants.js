@@ -11,6 +11,15 @@ export const PROCESS_CAL_BASE_URL = 'http://localhost:3000/api/minmax3month/proc
 export const CALCULATE_MINMAX_URL = 'http://localhost:3000/api/minmax3month/calculate-minmax';
 export const AUDIT_ROUTE_CODE_URL = 'http://localhost:3000/api/minmax3month/audit-route-code';
 export const TARGET_DOCKS = ['S1', 'S4', 'SH'];
+export const MINMAX_THEME = {
+  background: '#F8FAFC',
+  foreground: '#0F172A',
+  card: '#FFFFFF',
+  muted: '#F1F5F9',
+  mutedText: '#64748B',
+  border: '#E2E8F0',
+  darkSurface: '#0F0F12',
+};
 export const REQUIRED_FILES = [
   { key: 'addressMaster', label: 'AddressMaster', fileName: 'AddressMaster.txt', accept: '.txt', typeLabel: 'TXT source file' },
   { key: 'partMaster', label: 'PartMaster', fileName: 'PartMaster.txt', accept: '.txt', typeLabel: 'TXT source file' },
