@@ -381,11 +381,12 @@ VBA-equivalent flow:
 2. If Cal Base fails with a strict process error, stop and return that structured error.
 3. Formula calculations start from Cal Base rows and must calculate `N+1`, `N+2`, and `N+3` separately.
 4. `MaxNqcPerDay` is trace only in this stage unless later VBA review proves otherwise.
-5. Route code is derived only from `P/C Add` or an explicitly equivalent source field:
-   - `PC` -> route `1`
-   - `S/Direct` -> route `2`
-   - `D/Sequence` -> route `3`
-6. If RouteCode cannot be resolved, set `RouteCode = null`, add `ROUTE_CODE_UNRESOLVED`, and do not guess from unrelated fields.
+5. Route code is derived only from `P/C Add` or an explicitly equivalent source field using the original VBA pattern:
+   - source value equal to `Error` -> route `Err` / route code `Err`
+   - second character `-` -> route `PC` / route code `1`
+   - first character `S` -> route `S` / route code `2`
+   - otherwise -> route `D` / route code `3`
+6. If RouteCode cannot be resolved because `P/C Add` is blank or unavailable, set `RouteCode = null`, add `ROUTE_CODE_UNRESOLVED`, and do not guess from unrelated fields.
 7. Safety trace values are:
    - `PCSafetyTime = PC SAFETY`
    - `LSSafetyTime = LS SAFTY`
@@ -439,6 +440,9 @@ Named formula constants:
 - `SAFETY_RATIO_BUFFER = 0.0005`
 - `ROUTE1_LS_MAX_FIXED_FREQ = 24`
 - `SH_FIXED_ORDER_FREQ = 8`
+- `DISPLAY_DASH = "-"`
+- `DISPLAY_NO_DATA = "NO Data"`
+- `DISPLAY_ERROR = "Err"`
 
 Formula output fields may be mixed values:
 
