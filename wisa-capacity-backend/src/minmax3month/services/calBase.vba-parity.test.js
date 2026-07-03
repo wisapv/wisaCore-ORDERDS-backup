@@ -13,7 +13,7 @@ const addressHeaders = ['SUPL', 'PLANT', 'COMP', 'PLANT', 'DOCK', 'PART #', 'KBN
 const partHeaders = ['SUPL', 'PLANT', 'S.DOCK', 'COMP', 'PLANT', 'DOCK', 'Production Routing', 'PART #', 'T/C FROM(UNL)', 'T/C TO (UNL)', 'PART DESC', 'Life Cycle Code', 'Team Member', 'Model Name', 'ORD Method', 'BvsC REF', 'KBN', 'QTY /CONT', 'V.SHARE FLG[SYS L/O DATE BASIS]', 'V.SHARE VALUE', 'PC DELIV', 'PC SAFETY', 'LS DELIV', 'LS SAFTY', 'Safety(PCS)', 'Packaging Type', 'Part PCS Weight(g)', 'PACK QTY/CONT', 'Latest Physical Inventory DTE & Time', 'Create User', 'Create Date Time', 'Update User', 'Update Date Time', 'V.SHARE GROUP'];
 const orderHeaders = ['SUPL', 'PLANT', 'S.DOCK', 'COMP', 'PLANT', 'DOCK', 'UNLD DTE', 'FRQ', 'SFX', 'CFC', 'Re-Export FLG', 'PART #', 'KBN Print Address', 'AICO/CEPT', 'KBN', 'QTY /CONT', 'C17', 'C18', 'C19', 'C20', 'C21', 'C22', 'C23', 'C24', 'C25', 'A BoxLayer ADJ(Box)', 'BC BoxLayer ADJ(Box)', 'C28', 'C29', 'C30', 'C31', 'C32', 'C33', 'C34', 'C35', 'C36', 'C37', 'C38', 'C39', 'C40', 'C41', 'C42', 'C43', 'BoxLayer FLG'];
 const setHeaders = ['SUPL', 'PLANT', 'S.DOCK', 'COMP', 'PLANT', 'DOCK', 'Key Part', 'Depend', 'T/C FROM(UNL)', 'T/C TO (UNL)', 'Create User', 'Create Date Time', 'Update User', 'Update Date Time'];
-const freqHeader = ['SuppCd', 'SuppPlantCd', 'SuppDockCd', 'RcvCompDockCd', 'Curr', 'New'];
+const freqHeader = ['SuppCd(*)', 'SuppPlantCd', 'SuppDockCd', 'RcvCompCd(*)', 'RcvCompPlantCd', 'RcvCompDockCd', 'OrderFreq(*)', 'OrderFreq(24)'];
 const nqcHeader = ['Dock', 'PartNo', 'N', 'N+1', 'N+2', 'N+3'];
 
 const makeAddressRow = ({ dock = 'S1', part = '52110F0F50B1', kbnAddress = 'ADDR 1' } = {}) => ['ASIA', 'A', '722B', 'S', dock, part, 'K1', '20251001', '99991231', kbnAddress, '', 'LS1', '', '', '', 'EXT1', '2', '1', 'INT1', '', '', '', '17-OCT-25'];
@@ -22,7 +22,7 @@ const makeOrderRow = ({ dock = 'S1', part = '52110F0F50B1', kbnAddress = 'ADDR 1
 const makeSetRow = ({ dock = 'S1', keyPart = '52110F0F50B1', depend = 'DEPEND1' } = {}) => ['AAS1', 'U', 'I1', '722B', 'S', dock, keyPart, depend, '20240111', '99991231', 'U1', '20240111', 'U2', '17-OCT-25'];
 
 const nqcFile = ({ dock = 'S1', part = '52110F0F50B1' } = {}) => makeWorkbookFile([{ name: 'NQC Result transfer', rows: [nqcHeader, [dock, part, 100, 40, 42, 44, '', '', '', '', '202510']] }]);
-const freqFile = ({ keyDock = 'S1', supp = 'AAS1', plant = 'U', sdock = 'I1' } = {}) => makeWorkbookFile([{ name: '1-3(S1)', rows: [['title'], [], freqHeader, [supp, plant, sdock, keyDock, 24, 32]] }]);
+const freqFile = ({ keyDock = 'S1', supp = 'AAS1', plant = 'U', sdock = 'I1' } = {}) => makeWorkbookFile([{ name: '1-3(S1)', rows: [['title'], [], freqHeader, [supp, plant, sdock, 'RC1', 'RP1', keyDock, 24, 32]] }]);
 
 const makeFiles = ({ address = makeAddressRow(), nqc = nqcFile(), partRows = [makePartRow()], freq = freqFile(), orderRows = [makeOrderRow()], setRows = [makeSetRow()] } = {}) => ({
   addressMaster: makeTextFile(addressHeaders, [address]),
