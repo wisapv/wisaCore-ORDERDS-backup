@@ -1,4 +1,4 @@
-import { CheckCircle2, Database, LoaderCircle, Play, Server, Sparkles, XCircle } from 'lucide-react';
+import { CheckCircle2, ChevronDown, LoaderCircle, Play, Server, XCircle } from 'lucide-react';
 import Header from '../../components/Header.jsx';
 import MinmaxActionPanel from './components/MinmaxActionPanel.jsx';
 import MinmaxConfigPanel from './components/MinmaxConfigPanel.jsx';
@@ -6,45 +6,37 @@ import MinmaxResultCard from './components/MinmaxResultCard.jsx';
 import MinmaxSectionCard from './components/MinmaxSectionCard.jsx';
 import MinmaxStatusBadge from './components/MinmaxStatusBadge.jsx';
 import MinmaxUploadGrid from './components/MinmaxUploadGrid.jsx';
-import { REQUIRED_FILES, TARGET_DOCKS } from './constants/minmaxConstants.js';
+import { REQUIRED_FILES } from './constants/minmaxConstants.js';
 import { useMinmaxActions } from './hooks/useMinmaxActions.js';
 import { useMinmaxFiles } from './hooks/useMinmaxFiles.js';
 import { useMinmaxHealth } from './hooks/useMinmaxHealth.js';
 
-const RESULT_CARDS = [
+const DEBUG_RESULT_CARDS = [
   ['validation', 'Validation Result', 'Awaiting upload validation'],
   ['preview', 'Preview Result', 'Awaiting file preview'],
   ['calBase', 'Cal Base Processing', 'Awaiting Cal Base processing'],
   ['routeAudit', 'RouteCode Audit', 'Awaiting RouteCode audit', true],
-  ['minmax', 'Min-Max Calculation', 'Awaiting Min-Max calculation'],
+  ['addressMaster', 'AddressMaster Processing', 'Awaiting AddressMaster processing'],
   ['nqc', 'NQC Processing', 'Awaiting NQC processing'],
   ['partMaster', 'PartMaster Processing', 'Awaiting PartMaster processing'],
   ['freqLp', 'Freq_LP Processing', 'Awaiting Freq_LP processing'],
   ['orderSummary', 'Order Summary / BoxLayer Processing', 'Awaiting Order Summary processing'],
   ['setPart', 'SetPart Processing', 'Awaiting SetPart processing'],
-  ['addressMaster', 'AddressMaster Processing', 'Awaiting AddressMaster processing'],
 ];
 
-function HealthStatus({ health }) {
-  let icon = <XCircle className="text-red-400" size={20} />;
-
-  if (health.status === 'connected') {
-    icon = <CheckCircle2 className="text-emerald-400" size={20} />;
-  }
-
-  if (health.status === 'loading') {
-    icon = <LoaderCircle className="animate-spin text-white/60" size={20} />;
-  }
-
+function HealthPill({ health }) {
+  const tone = health.status === 'connected' ? 'success' : health.status === 'loading' ? 'idle' : 'error';
+  const Icon = health.status === 'connected' ? CheckCircle2 : health.status === 'loading' ? LoaderCircle : XCircle;
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-black/50 p-3">
-      {icon}
-      <span className="text-sm font-semibold text-white">{health.message}</span>
-    </div>
+    <MinmaxStatusBadge tone={tone} className="gap-1.5">
+      <Icon size={12} className={health.status === 'loading' ? 'animate-spin' : ''} />
+      <Server size={12} />
+      {health.message}
+    </MinmaxStatusBadge>
   );
 }
 
-function ValidateButton({ action, isLoading, disabled }) {
+function CalculateButton({ action, isLoading, disabled }) {
   if (!action) return null;
 
   return (
@@ -52,17 +44,17 @@ function ValidateButton({ action, isLoading, disabled }) {
       type="button"
       onClick={action.onClick}
       disabled={disabled}
-      className="w-full bg-wisa-pink text-white py-4 rounded-2xl text-sm font-bold tracking-widest uppercase hover:shadow-[0_0_24px_rgba(233,30,140,0.4)] hover:bg-pink-500 transition-all duration-300 disabled:opacity-50 disabled:hover:shadow-none flex items-center justify-center gap-2"
+      className="w-full bg-wisa-pink text-white py-5 rounded-[24px] text-base font-bold tracking-widest uppercase hover:shadow-[0_0_28px_rgba(233,30,140,0.4)] hover:bg-pink-500 transition-all duration-300 disabled:opacity-50 disabled:hover:shadow-none flex items-center justify-center gap-3"
     >
       {isLoading ? (
         <span className="flex items-center justify-center gap-2">
-          <LoaderCircle className="animate-spin" size={16} />
+          <LoaderCircle className="animate-spin" size={20} />
           {action.loadingLabel}
         </span>
       ) : (
         <span className="flex items-center justify-center gap-2">
-          <Play size={16} fill="currentColor" />
-          Validate Files
+          <Play size={20} fill="currentColor" />
+          Calculate Min-Max
         </span>
       )}
     </button>
@@ -75,91 +67,50 @@ export default function Minmax3MonthPage() {
   const { actions, results, loading, anyLoading } = useMinmaxActions(files, config);
   const selectedCount = Object.values(files).filter(Boolean).length;
   const selectedFileLabel = `${selectedCount}/${REQUIRED_FILES.length} selected`;
-  const validateAction = actions.find((action) => action.key === 'validation');
+  const minmaxAction = actions.find((action) => action.key === 'minmax');
+  const debugActions = actions.filter((action) => action.key !== 'minmax');
 
   return (
-    <div className="min-h-full bg-slate-50 text-slate-950">
+    <div className="min-h-full bg-slate-50 text-slate-950 flex flex-col gap-6">
       <Header title="Min-Max 3 Month" />
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 shrink-0">
-        <div className="xl:col-span-2 relative overflow-hidden bg-[#111111] border border-white/10 rounded-[32px] p-6 shadow-2xl flex flex-col justify-center group">
-          <div className="absolute -top-24 -right-24 w-64 h-64 bg-wisa-pink/10 rounded-full blur-3xl opacity-50 group-hover:bg-wisa-pink/20 transition-all duration-700" />
-          <div className="relative z-10 flex flex-col gap-5">
-            <div>
-              <span className="text-wisa-pink text-[10px] font-bold tracking-[0.2em] uppercase mb-2 flex items-center gap-1.5">
-                <Sparkles size={12} />
-                Min-Max Operation
-              </span>
-              <h1 className="text-white font-semibold text-xl md:text-2xl tracking-wide">Min-Max 3 Month</h1>
-              <p className="text-white/45 text-xs md:text-sm mt-2 max-w-2xl">
-                Upload source files, validate inputs, audit RouteCode, and calculate formulas.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 w-fit">
-                <Database size={18} className="text-wisa-pink" />
-                <span className="text-sm font-bold text-white">
-                  {selectedFileLabel}
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/35">Required files</span>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {TARGET_DOCKS.map((dock) => (
-                  <span
-                    key={dock}
-                    className="bg-wisa-pink/10 text-wisa-pink border border-wisa-pink/30 px-3 py-1.5 rounded-xl text-[10px] font-bold tracking-widest uppercase"
-                  >
-                    {dock}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="xl:col-span-1 bg-[#111111] border border-white/10 rounded-[32px] p-6 shadow-2xl flex flex-col gap-4 relative overflow-hidden">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-white/40 text-[10px] font-bold tracking-[0.2em] uppercase">Backend & Setup</span>
-            <MinmaxStatusBadge tone="dark">
-              <Server size={12} className="mr-1" />
-              {health.moduleName}
-            </MinmaxStatusBadge>
-          </div>
-
-          <HealthStatus health={health} />
-          <MinmaxConfigPanel config={config} onConfigChange={handleConfigChange} variant="dark" showDocks={false} />
-          <ValidateButton action={validateAction} isLoading={loading.validation} disabled={anyLoading} />
-        </div>
-
-      <MinmaxSectionCard
-        eyebrow="Required Files"
-        title="Source Files"
-        description="Upload the six required source files. Cards stay light for readability while preserving pink selected states."
-      >
-        <MinmaxUploadGrid files={files} onFileChange={handleFileChange} />
-      </MinmaxSectionCard>
-
-      <MinmaxSectionCard
-        eyebrow="Workflow"
-        title="Operational Actions"
-        description="Run the recommended flow left to right. Advanced individual processors are available for stage-level checks."
-      >
-        <MinmaxActionPanel actions={actions} loading={loading} disabled={anyLoading} />
-      </MinmaxSectionCard>
-
-      <div className="grid grid-cols-1 gap-6 pb-6">
-        {RESULT_CARDS.map(([key, title, emptyText, important]) => (
-          <MinmaxResultCard
-            key={key}
-            title={title}
-            result={results[key]}
-            emptyText={emptyText}
-            important={important}
-          />
-        ))}
+      <div className="-mt-4 flex justify-end">
+        <HealthPill health={health} />
       </div>
+
+      <MinmaxSectionCard
+        eyebrow="Setup"
+        title="Upload & Configure"
+        description="Upload the six required source files and set the calculation config, then run the full Min-Max calculation in one step."
+      >
+        <div className="flex flex-col gap-6">
+          <div className="flex w-fit items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <span className="text-sm font-bold text-slate-950">{selectedFileLabel}</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Required files</span>
+          </div>
+          <MinmaxUploadGrid files={files} onFileChange={handleFileChange} />
+          <MinmaxConfigPanel config={config} onConfigChange={handleConfigChange} />
+        </div>
+      </MinmaxSectionCard>
+
+      <CalculateButton action={minmaxAction} isLoading={loading.minmax} disabled={anyLoading} />
+
+      <div id="main-result-slot" />
+
+      <details className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-500 marker:hidden">
+          Advanced tools for debugging individual files
+          <ChevronDown size={18} className="text-slate-400" />
+        </summary>
+        <div className="mt-5 flex flex-col gap-6">
+          <MinmaxActionPanel actions={debugActions} loading={loading} disabled={anyLoading} wrapInDetails={false} />
+          <div className="flex flex-col gap-6">
+            {DEBUG_RESULT_CARDS.filter(([key]) => results[key]).map(([key, title, emptyText, important]) => (
+              <MinmaxResultCard key={key} title={title} result={results[key]} emptyText={emptyText} important={important} />
+            ))}
+          </div>
+        </div>
+      </details>
     </div>
   );
 }

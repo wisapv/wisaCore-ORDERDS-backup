@@ -10,7 +10,15 @@ function ActionButton({ action, loading, disabled, primary = false, compact = fa
   );
 }
 
-export default function MinmaxActionPanel({ actions, loading, disabled }) {
+export default function MinmaxActionPanel({ actions, loading, disabled, wrapInDetails = true }) {
+  if (!wrapInDetails) {
+    return (
+      <div className="flex flex-col flex-wrap gap-3 md:flex-row">
+        {actions.map((action) => <ActionButton key={action.key} action={action} loading={loading} disabled={disabled} compact />)}
+      </div>
+    );
+  }
+
   const primaryActions = PRIMARY_ACTION_KEYS.map((key) => actions.find((action) => action.key === key)).filter(Boolean);
   const advancedActions = actions.filter((action) => !PRIMARY_ACTION_KEYS.includes(action.key));
   return (
