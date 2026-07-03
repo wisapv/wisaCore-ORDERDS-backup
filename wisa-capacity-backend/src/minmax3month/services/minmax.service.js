@@ -47,7 +47,7 @@ const buildLookupStatus = (alarms) => {
   return 'OK';
 };
 
-export const processCalBase = ({ files, targetMonth, workingDayN1, workingDayN2, workingDayN3, targetDocks, asOfDate }) => {
+export const processCalBase = ({ files, targetMonth, workingDayN1, workingDayN2, workingDayN3, targetDocks, asOfDate, unitPerDay, tackTime }) => {
   const missingFiles = REQUIRED_FILES.filter((key) => !pickFile(files, key));
   if (missingFiles.length) {
     return {
@@ -59,11 +59,15 @@ export const processCalBase = ({ files, targetMonth, workingDayN1, workingDayN2,
   const n1Days = toPositiveNumber(workingDayN1);
   const n2Days = toPositiveNumber(workingDayN2);
   const n3Days = toPositiveNumber(workingDayN3);
+  const unitPerDayValue = toPositiveNumber(unitPerDay);
+  const tackTimeValue = toPositiveNumber(tackTime);
   const validationErrors = [];
   if (!targetMonth) validationErrors.push('targetMonth is required');
   if (n1Days === null) validationErrors.push('workingDayN1 is required and must be a positive number');
   if (n2Days === null) validationErrors.push('workingDayN2 is required and must be a positive number');
   if (n3Days === null) validationErrors.push('workingDayN3 is required and must be a positive number');
+  if (unitPerDayValue === null) validationErrors.push('unitPerDay is required and must be a positive number');
+  if (tackTimeValue === null) validationErrors.push('tackTime is required and must be a positive number');
   if (validationErrors.length) return { message: 'Cal base processing failed', errors: validationErrors };
 
   const docks = normalizeDocks(targetDocks);
@@ -365,7 +369,7 @@ const calculateMonth = ({ label, nqcPerDay, row, routeCode, ratio, qtyPerCont, o
   };
 };
 
-export const calculateMinMaxFromCalBase = ({ calBaseResult, targetMonth, targetDocks }) => {
+export const calculateMinMaxFromCalBase = ({ calBaseResult, targetMonth, targetDocks, unitPerDay, tackTime }) => {
   const warnings = [...(calBaseResult.warnings || [])];
   const alarms = [...(calBaseResult.alarms || [])];
   let okRows = 0;
@@ -412,10 +416,10 @@ export const calculateMinMaxFromCalBase = ({ calBaseResult, targetMonth, targetD
   return { summary: { calBaseRows: calBaseResult.rows?.length || 0, outputRows: rows.length, okRows, warningRows, errorRows, targetMonth, targetDocks }, rows, warnings, alarms };
 };
 
-export const calculateMinMax = ({ files, targetMonth, workingDayN1, workingDayN2, workingDayN3, targetDocks, asOfDate }) => {
-  const calBaseResult = processCalBase({ files, targetMonth, workingDayN1, workingDayN2, workingDayN3, targetDocks, asOfDate });
+export const calculateMinMax = ({ files, targetMonth, workingDayN1, workingDayN2, workingDayN3, targetDocks, asOfDate, unitPerDay, tackTime }) => {
+  const calBaseResult = processCalBase({ files, targetMonth, workingDayN1, workingDayN2, workingDayN3, targetDocks, asOfDate, unitPerDay, tackTime });
   if (calBaseResult.errors?.length) return calBaseResult;
-  return calculateMinMaxFromCalBase({ calBaseResult, targetMonth, targetDocks: normalizeDocks(targetDocks) });
+  return calculateMinMaxFromCalBase({ calBaseResult, targetMonth, targetDocks: normalizeDocks(targetDocks), unitPerDay, tackTime });
 };
 
 const ROUTE_AUDIT_FIELDS = ['P/C Add', 'PC Add', 'PCAdd', 'Kanban Print Address', 'Lineside Address', 'Conveyance Route(External)', 'Conveyance Route(Internal)', 'Production Routing', 'RouteSourceField'];
@@ -446,8 +450,8 @@ export const auditRouteCodeFromCalBase = (calBaseResult) => {
     warnings: calBaseResult.warnings || [],
   };
 };
-export const auditRouteCode = ({ files, targetMonth, workingDayN1, workingDayN2, workingDayN3, targetDocks, asOfDate }) => {
-  const calBaseResult = processCalBase({ files, targetMonth, workingDayN1, workingDayN2, workingDayN3, targetDocks, asOfDate });
+export const auditRouteCode = ({ files, targetMonth, workingDayN1, workingDayN2, workingDayN3, targetDocks, asOfDate, unitPerDay, tackTime }) => {
+  const calBaseResult = processCalBase({ files, targetMonth, workingDayN1, workingDayN2, workingDayN3, targetDocks, asOfDate, unitPerDay, tackTime });
   if (calBaseResult.errors?.length) return calBaseResult;
   return auditRouteCodeFromCalBase(calBaseResult);
 };

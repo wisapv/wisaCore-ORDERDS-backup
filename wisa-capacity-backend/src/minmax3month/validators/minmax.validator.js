@@ -46,6 +46,8 @@ export const validateMinmaxUpload = ({ files = {}, body = {} }) => {
   const workingDayN1 = toPositiveNumber(body.workingDayN1);
   const workingDayN2 = toPositiveNumber(body.workingDayN2);
   const workingDayN3 = toPositiveNumber(body.workingDayN3);
+  const unitPerDay = toPositiveNumber(body.unitPerDay);
+  const tackTime = toPositiveNumber(body.tackTime);
 
   if (workingDayN1 === null) {
     errors.push('workingDayN1 is required and must be a positive number');
@@ -59,6 +61,14 @@ export const validateMinmaxUpload = ({ files = {}, body = {} }) => {
     errors.push('workingDayN3 is required and must be a positive number');
   }
 
+  if (unitPerDay === null) {
+    errors.push('unitPerDay is required and must be a positive number');
+  }
+
+  if (tackTime === null) {
+    errors.push('tackTime is required and must be a positive number');
+  }
+
   return {
     errors,
     config: {
@@ -66,6 +76,8 @@ export const validateMinmaxUpload = ({ files = {}, body = {} }) => {
       workingDayN1,
       workingDayN2,
       workingDayN3,
+      unitPerDay,
+      tackTime,
       targetDocks: normalizeTargetDocks(body.targetDocks),
     },
   };

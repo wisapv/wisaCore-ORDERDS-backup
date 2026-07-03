@@ -41,6 +41,8 @@ const runCalBase = (overrides = {}) => processCalBase({
   workingDayN3: 22,
   targetDocks: ['S1', 'S4', 'SH'],
   asOfDate: '20251017',
+  unitPerDay: 579,
+  tackTime: 95,
 });
 
 const happy = runCalBase();
