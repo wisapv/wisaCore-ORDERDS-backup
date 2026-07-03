@@ -369,7 +369,39 @@ const calculateMonth = ({ label, nqcPerDay, row, routeCode, ratio, qtyPerCont, o
   };
 };
 
-export const calculateMinMaxFromCalBase = ({ calBaseResult, targetMonth, targetDocks, unitPerDay, tackTime }) => {
+const resolveReduceSupCap = (reduceSupCapByKey, calBaseKey) => {
+  if (!reduceSupCapByKey) return 0;
+  const raw = reduceSupCapByKey instanceof Map ? reduceSupCapByKey.get(calBaseKey) : reduceSupCapByKey[calBaseKey];
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const computeSafetyTimes = ({ row, routeCode, ratio, orderFreq, qtyPerCont, maxNqcPerDay, unitPerDay, tackTime, reduceSupCap }) => {
+  const dock = String(row.DOCK).trim();
+  const v3 = excelRoundUp((Number(unitPerDay) / 24) * (Number(tackTime) / 60), 0);
+  const am3 = excelRoundUp((Number(unitPerDay) / 36) * (Number(tackTime) / 60), 0);
+  const pcDelLsDelBase = dock === 'S4' ? am3 : v3;
+
+  const boxOrderRatio = Number.isFinite(maxNqcPerDay) && Number.isFinite(ratio) && orderFreq > 0 && qtyPerCont > 0
+    ? (maxNqcPerDay * ratio) / orderFreq / qtyPerCont
+    : null;
+
+  const supCap = reduceSupCap !== 0 ? 0 : 20;
+  const prodAllowance = dock === 'S1' || dock === 'S4' ? 0 : 60;
+  const seqFluctuation = boxOrderRatio !== null && boxOrderRatio > 1.5 ? 0 : 30;
+  const pcSafetyTime = supCap + prodAllowance + seqFluctuation;
+
+  const pcDel = pcDelLsDelBase;
+  const lsDel = routeCode === 3 ? 17 : pcDelLsDelBase;
+  const abnormal = routeCode === 3 ? 8 : 23;
+  const lsSafetyTime = abnormal;
+
+  const totalSafetyTime = pcSafetyTime + lsSafetyTime;
+
+  return { pcDel, lsDel, supCap, prodAllowance, seqFluctuation, pcSafetyTime, lsSafetyTime, totalSafetyTime, boxOrderRatio };
+};
+
+export const calculateMinMaxFromCalBase = ({ calBaseResult, targetMonth, targetDocks, unitPerDay, tackTime, reduceSupCapByKey }) => {
   const warnings = [...(calBaseResult.warnings || [])];
   const alarms = [...(calBaseResult.alarms || [])];
   let okRows = 0;
@@ -382,20 +414,24 @@ export const calculateMinMaxFromCalBase = ({ calBaseResult, targetMonth, targetD
     const qtyPerCont = toNumberOrNull(row['QTY /CONT']);
     const orderFreq = toNumberOrNull(row.OrderFreqForCalculation);
     const boxLayer = toNumberOrNull(row.BoxLayer);
-    const pcSafetyTime = toNumberOrNull(row['PC SAFETY']);
-    const lsSafetyTime = toNumberOrNull(row['LS SAFTY']);
+    const maxNqcPerDay = toNumberOrNull(row.MaxNqcPerDay);
     const { Route, RouteCode, RouteSourceField, RouteSourceValue, alarm: routeAlarm } = deriveRouteCode(row);
 
     if (routeAlarm) formulaAlarms.push(routeAlarm);
-    if (pcSafetyTime === null) formulaAlarms.push({ type: 'INVALID_PC_SAFETY', severity: 'ERROR' });
-    if (lsSafetyTime === null) formulaAlarms.push({ type: 'INVALID_LS_SAFETY', severity: 'ERROR' });
     if (!(ratio > 0)) formulaAlarms.push({ type: 'INVALID_DISTRIBUTION_RATIO', severity: 'ERROR' });
     if (!(qtyPerCont > 0)) formulaAlarms.push({ type: 'INVALID_QTY_PER_CONT', severity: 'ERROR' });
     if (!(orderFreq > 0) && RouteCode !== DISPLAY_ERROR) formulaAlarms.push({ type: 'INVALID_ORDER_FREQ', severity: 'ERROR' });
     if (boxLayer === null && RouteCode !== DISPLAY_ERROR) formulaAlarms.push({ type: 'BOX_LAYER_REQUIRED_FOR_MAX', severity: 'ERROR' });
 
-    const totalSafetyTime = pcSafetyTime !== null && lsSafetyTime !== null ? pcSafetyTime + lsSafetyTime : null;
-    const output = { ...row, Route, RouteCode, RouteSourceField, RouteSourceValue, PCSafetyTime: pcSafetyTime, LSSafetyTime: lsSafetyTime, TotalSafetyTime: totalSafetyTime };
+    const reduceSupCap = resolveReduceSupCap(reduceSupCapByKey, row.CalBaseKey);
+    const { pcDel, lsDel, supCap, prodAllowance, seqFluctuation, pcSafetyTime, lsSafetyTime, totalSafetyTime, boxOrderRatio } = computeSafetyTimes({ row, routeCode: RouteCode, ratio, orderFreq, qtyPerCont, maxNqcPerDay, unitPerDay, tackTime, reduceSupCap });
+
+    const output = {
+      ...row, Route, RouteCode, RouteSourceField, RouteSourceValue,
+      PCSafetyTime: pcSafetyTime, LSSafetyTime: lsSafetyTime, TotalSafetyTime: totalSafetyTime,
+      PcDel: pcDel, LsDel: lsDel, SupCap: supCap, ProdAllowance: prodAllowance, SeqFluctuation: seqFluctuation,
+      BoxOrderRatio: boxOrderRatio, ReduceSupCap: reduceSupCap,
+    };
 
     monthFields.forEach(({ label, nqcField }) => {
       Object.assign(output, calculateMonth({ label, nqcPerDay: toNumberOrNull(row[nqcField]) ?? 0, row, routeCode: RouteCode, ratio, qtyPerCont, orderFreq, boxLayer, pcSafetyTime, lsSafetyTime, totalSafetyTime }));
@@ -416,10 +452,10 @@ export const calculateMinMaxFromCalBase = ({ calBaseResult, targetMonth, targetD
   return { summary: { calBaseRows: calBaseResult.rows?.length || 0, outputRows: rows.length, okRows, warningRows, errorRows, targetMonth, targetDocks }, rows, warnings, alarms };
 };
 
-export const calculateMinMax = ({ files, targetMonth, workingDayN1, workingDayN2, workingDayN3, targetDocks, asOfDate, unitPerDay, tackTime }) => {
+export const calculateMinMax = ({ files, targetMonth, workingDayN1, workingDayN2, workingDayN3, targetDocks, asOfDate, unitPerDay, tackTime, reduceSupCapByKey }) => {
   const calBaseResult = processCalBase({ files, targetMonth, workingDayN1, workingDayN2, workingDayN3, targetDocks, asOfDate, unitPerDay, tackTime });
   if (calBaseResult.errors?.length) return calBaseResult;
-  return calculateMinMaxFromCalBase({ calBaseResult, targetMonth, targetDocks: normalizeDocks(targetDocks), unitPerDay, tackTime });
+  return calculateMinMaxFromCalBase({ calBaseResult, targetMonth, targetDocks: normalizeDocks(targetDocks), unitPerDay, tackTime, reduceSupCapByKey });
 };
 
 const ROUTE_AUDIT_FIELDS = ['P/C Add', 'PC Add', 'PCAdd', 'Kanban Print Address', 'Lineside Address', 'Conveyance Route(External)', 'Conveyance Route(Internal)', 'Production Routing', 'RouteSourceField'];
