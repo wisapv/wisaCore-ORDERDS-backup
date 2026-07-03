@@ -280,7 +280,6 @@ const isDisplayValue = (value) => isDisplayDash(value) || isNoData(value) || isD
 
 export const deriveRouteFromPcAdd = (value) => {
   const raw = String(value ?? '').trim();
-  if (!raw) return { Route: null, RouteCode: null, alarm: { type: 'ROUTE_CODE_UNRESOLVED', severity: 'ERROR' } };
   if (excelTextEquals(raw, 'Error')) return { Route: DISPLAY_ERROR, RouteCode: DISPLAY_ERROR };
   if (raw[1] === DISPLAY_DASH) return { Route: 'PC', RouteCode: 1 };
   if (raw[0]?.toUpperCase() === 'S') return { Route: 'S', RouteCode: 2 };
@@ -420,9 +419,8 @@ export const calculateMinMaxFromCalBase = ({ calBaseResult, targetMonth, targetD
     const orderFreq = toNumberOrNull(row.OrderFreqForCalculation);
     const boxLayer = toNumberOrNull(row.BoxLayer);
     const maxNqcPerDay = toNumberOrNull(row.MaxNqcPerDay);
-    const { Route, RouteCode, RouteSourceField, RouteSourceValue, alarm: routeAlarm } = deriveRouteCode(row);
+    const { Route, RouteCode, RouteSourceField, RouteSourceValue } = deriveRouteCode(row);
 
-    if (routeAlarm) formulaAlarms.push(routeAlarm);
     if (!(ratio > 0)) formulaAlarms.push({ type: 'INVALID_DISTRIBUTION_RATIO', severity: 'ERROR' });
     if (!(qtyPerCont > 0)) formulaAlarms.push({ type: 'INVALID_QTY_PER_CONT', severity: 'ERROR' });
     if (!(orderFreq > 0) && RouteCode !== DISPLAY_ERROR) formulaAlarms.push({ type: 'INVALID_ORDER_FREQ', severity: 'ERROR' });
@@ -474,10 +472,13 @@ export const auditRouteCodeFromCalBase = (calBaseResult) => {
     rows.forEach((row, index) => {
       const value = row[fieldName];
       const key = String(value ?? '').trim();
-      if (key) countByValue[key] = (countByValue[key] || 0) + 1;
+      if (key) {
+        countByValue[key] = (countByValue[key] || 0) + 1;
+        mappedCount += 1;
+      } else {
+        unmappedCount += 1;
+      }
       const mapped = deriveRouteFromPcAdd(value);
-      if (mapped.RouteCode === null) unmappedCount += 1;
-      else mappedCount += 1;
       if (sampleRows.length < 10) sampleRows.push({ rowIndex: index + 1, CalBaseKey: row.CalBaseKey, value, Route: mapped.Route, RouteCode: mapped.RouteCode });
     });
     return { fieldName, distinctValues: Object.keys(countByValue), distinctValueCount: Object.keys(countByValue).length, countByValue, mappedCount, unmappedCount, sampleRows };

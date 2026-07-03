@@ -86,9 +86,17 @@ assert.ok(missingBoxLayer.FormulaAlarms.some((alarm) => alarm.type === 'BOX_LAYE
 assert.equal(missingBoxLayer.N1_PC_Max_Box, null);
 assert.equal(missingBoxLayer.N1_LS_Max_Box, 2);
 
-const unresolvedRoute = calculateOne(makeRow({ 'P/C Add': '' }));
-assert.equal(unresolvedRoute.RouteCode, null);
-assert.ok(unresolvedRoute.FormulaAlarms.some((alarm) => alarm.type === 'ROUTE_CODE_UNRESOLVED'));
+// VBA: IF(P/C_Add="Error","Err",IF(MID(P/C_Add,2,1)="-","PC",IF(LEFT(P/C_Add,1)="S","S","D")))
+// A blank P/C Add falls through every condition (MID("",2,1)="" and LEFT("",1)="" both fail
+// to match) straight to the "D" default - it is never an unresolved/error case.
+const blankPcAdd = calculateOne(makeRow({ 'P/C Add': '' }));
+assert.equal(blankPcAdd.Route, 'D');
+assert.equal(blankPcAdd.RouteCode, 3);
+assert.equal(blankPcAdd.LsDel, 17);
+assert.equal(blankPcAdd.LSSafetyTime, 8);
+assert.equal(blankPcAdd.N1_LS_Min_Box, DISPLAY_DASH);
+assert.equal(blankPcAdd.N1_LS_Max_Box, DISPLAY_DASH);
+assert.equal(blankPcAdd.FormulaStatus, 'OK');
 
 const reduceSupCapOverride = calculateOne(makeRow(), { reduceSupCapByKey: { ROW1: 1 } });
 assert.equal(reduceSupCapOverride.ReduceSupCap, 1);
