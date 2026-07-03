@@ -313,25 +313,50 @@ const nullMonthOutputs = (label) => ({
   [`${label}_LS_Max_Pcs`]: null,
 });
 
-const pcsFromBox = (boxValue, qtyPerCont) => Number.isFinite(boxValue) ? boxValue * qtyPerCont : boxValue;
-const pcMaxFromPcMin = ({ pcMinBox, nqcPerDay, ratio, orderFreq, qtyPerCont, boxLayer }) => {
-  if (isDisplayDash(pcMinBox)) return DISPLAY_DASH;
-  if (pcMinBox === 0) return 0;
-  if (isNoData(pcMinBox)) return DISPLAY_NO_DATA;
-  if (isDisplayError(pcMinBox)) return DISPLAY_ERROR;
-  if (Number.isFinite(pcMinBox) && orderFreq > 0 && boxLayer !== null) return pcMinBox + excelRoundUp(nqcPerDay * ratio / orderFreq / qtyPerCont, 0) + boxLayer;
+// PC Min Box divides the safety-time core by qtyPerCont before rounding up; PC Min Pcs rounds
+// up the same core directly (VBA BR column) - they are independent formulas, not Box*Qty.
+const computePcMin = ({ nqcPerDay, ratio, pcSafetyTime, qtyPerCont, routeCode, dock, divideByQty }) => {
+  if (routeCode === DISPLAY_ERROR) return DISPLAY_ERROR;
+  if (dock === 'SH' && routeCode === 1) return DISPLAY_NO_DATA;
+  if (routeCode === 2) return DISPLAY_DASH;
+  if (routeCode === 1 || routeCode === 3) {
+    const core = nqcPerDay * ratio * ((pcSafetyTime / WORKING_MINS_PER_DAY) + SAFETY_RATIO_BUFFER);
+    return excelRoundUp(divideByQty ? core / qtyPerCont : core, 0);
+  }
   return null;
 };
-const lsMaxFromLsMin = ({ lsMinBox, routeCode, nqcPerDay, ratio, orderFreq, qtyPerCont, boxLayer }) => {
-  if (isDisplayDash(lsMinBox)) return DISPLAY_DASH;
-  if (lsMinBox === 0) return 0;
-  if (isNoData(lsMinBox)) return DISPLAY_NO_DATA;
-  if (isDisplayError(lsMinBox)) return DISPLAY_ERROR;
-  if (!Number.isFinite(lsMinBox)) return null;
-  if (routeCode === 1) return lsMinBox + excelRoundUp(nqcPerDay * ratio / ROUTE1_LS_MAX_FIXED_FREQ / qtyPerCont, 0);
-  if (routeCode === 2 && orderFreq > 0 && boxLayer !== null) return lsMinBox + excelRoundUp(nqcPerDay * ratio / orderFreq / qtyPerCont, 0) + boxLayer;
+
+const computeLsMin = ({ nqcPerDay, ratio, lsSafetyForFormula, qtyPerCont, routeCode, divideByQty }) => {
   if (routeCode === 3) return DISPLAY_DASH;
+  if (routeCode === DISPLAY_ERROR) return DISPLAY_ERROR;
+  const core = nqcPerDay * ratio * ((lsSafetyForFormula / WORKING_MINS_PER_DAY) + SAFETY_RATIO_BUFFER);
+  return excelRoundUp(divideByQty ? core / qtyPerCont : core, 0);
+};
+
+// The "added term" (order-frequency increment [+ BoxLayer]) always divides by qtyPerCont
+// before rounding up, for both Box and Pcs. Only the outer scale differs: Box adds the term
+// as-is, Pcs multiplies it by qtyPerCont first - see applyMaxIncrement.
+const pcMaxAddedTerm = ({ nqcPerDay, ratio, orderFreq, qtyPerCont, boxLayer }) => {
+  if (!(orderFreq > 0) || boxLayer === null) return null;
+  return excelRoundUp(nqcPerDay * ratio / orderFreq / qtyPerCont, 0) + boxLayer;
+};
+
+const lsMaxAddedTerm = ({ routeCode, nqcPerDay, ratio, orderFreq, qtyPerCont, boxLayer }) => {
+  if (routeCode === 1) return excelRoundUp(nqcPerDay * ratio / ROUTE1_LS_MAX_FIXED_FREQ / qtyPerCont, 0);
+  if (routeCode === 2) {
+    if (!(orderFreq > 0) || boxLayer === null) return null;
+    return excelRoundUp(nqcPerDay * ratio / orderFreq / qtyPerCont, 0) + boxLayer;
+  }
   return null;
+};
+
+const applyMaxIncrement = ({ minValue, addedTerm, qtyPerCont, scaleByQty }) => {
+  if (isDisplayDash(minValue)) return DISPLAY_DASH;
+  if (minValue === 0) return 0;
+  if (isNoData(minValue)) return DISPLAY_NO_DATA;
+  if (isDisplayError(minValue)) return DISPLAY_ERROR;
+  if (!Number.isFinite(minValue) || addedTerm === null) return null;
+  return minValue + (scaleByQty ? addedTerm * qtyPerCont : addedTerm);
 };
 
 const calculateMonth = ({ label, nqcPerDay, row, routeCode, ratio, qtyPerCont, orderFreq, boxLayer, pcSafetyTime, lsSafetyTime, totalSafetyTime }) => {
@@ -343,33 +368,31 @@ const calculateMonth = ({ label, nqcPerDay, row, routeCode, ratio, qtyPerCont, o
     };
   }
 
-  let pcMinBox = null;
-  if (routeCode === DISPLAY_ERROR) pcMinBox = DISPLAY_ERROR;
-  else if (String(row.DOCK).trim() === 'SH' && routeCode === 1) pcMinBox = DISPLAY_NO_DATA;
-  else if (routeCode === 2) pcMinBox = DISPLAY_DASH;
-  else if (routeCode === 1 || routeCode === 3) pcMinBox = excelRoundUp(nqcPerDay * ratio * ((pcSafetyTime / WORKING_MINS_PER_DAY) + SAFETY_RATIO_BUFFER) / qtyPerCont, 0);
+  const dock = String(row.DOCK).trim();
 
-  const pcMaxBox = pcMaxFromPcMin({ pcMinBox, nqcPerDay, ratio, orderFreq, qtyPerCont, boxLayer });
+  const pcMinBox = computePcMin({ nqcPerDay, ratio, pcSafetyTime, qtyPerCont, routeCode, dock, divideByQty: true });
+  const pcMinPcs = computePcMin({ nqcPerDay, ratio, pcSafetyTime, qtyPerCont, routeCode, dock, divideByQty: false });
+  const pcAddedTerm = pcMaxAddedTerm({ nqcPerDay, ratio, orderFreq, qtyPerCont, boxLayer });
+  const pcMaxBox = applyMaxIncrement({ minValue: pcMinBox, addedTerm: pcAddedTerm, qtyPerCont, scaleByQty: false });
+  const pcMaxPcs = applyMaxIncrement({ minValue: pcMinPcs, addedTerm: pcAddedTerm, qtyPerCont, scaleByQty: true });
 
-  let lsMinBox = null;
-  if (routeCode === 3) lsMinBox = DISPLAY_DASH;
-  else if (routeCode === DISPLAY_ERROR) lsMinBox = DISPLAY_ERROR;
-  else {
-    let lsSafetyForFormula = totalSafetyTime;
-    if (String(row.DOCK).trim() !== 'SH' && routeCode === 1) lsSafetyForFormula = lsSafetyTime;
-    lsMinBox = excelRoundUp(nqcPerDay * ratio * ((lsSafetyForFormula / WORKING_MINS_PER_DAY) + SAFETY_RATIO_BUFFER) / qtyPerCont, 0);
-  }
-  const lsMaxBox = lsMaxFromLsMin({ lsMinBox, routeCode, nqcPerDay, ratio, orderFreq, qtyPerCont, boxLayer });
+  let lsSafetyForFormula = totalSafetyTime;
+  if (dock !== 'SH' && routeCode === 1) lsSafetyForFormula = lsSafetyTime;
+  const lsMinBox = computeLsMin({ nqcPerDay, ratio, lsSafetyForFormula, qtyPerCont, routeCode, divideByQty: true });
+  const lsMinPcs = computeLsMin({ nqcPerDay, ratio, lsSafetyForFormula, qtyPerCont, routeCode, divideByQty: false });
+  const lsAddedTerm = lsMaxAddedTerm({ routeCode, nqcPerDay, ratio, orderFreq, qtyPerCont, boxLayer });
+  const lsMaxBox = applyMaxIncrement({ minValue: lsMinBox, addedTerm: lsAddedTerm, qtyPerCont, scaleByQty: false });
+  const lsMaxPcs = applyMaxIncrement({ minValue: lsMinPcs, addedTerm: lsAddedTerm, qtyPerCont, scaleByQty: true });
 
   return {
     [`${label}_PC_Min_Box`]: pcMinBox,
     [`${label}_PC_Max_Box`]: pcMaxBox,
     [`${label}_LS_Min_Box`]: lsMinBox,
     [`${label}_LS_Max_Box`]: lsMaxBox,
-    [`${label}_PC_Min_Pcs`]: pcsFromBox(pcMinBox, qtyPerCont),
-    [`${label}_PC_Max_Pcs`]: pcsFromBox(pcMaxBox, qtyPerCont),
-    [`${label}_LS_Min_Pcs`]: pcsFromBox(lsMinBox, qtyPerCont),
-    [`${label}_LS_Max_Pcs`]: pcsFromBox(lsMaxBox, qtyPerCont),
+    [`${label}_PC_Min_Pcs`]: pcMinPcs,
+    [`${label}_PC_Max_Pcs`]: pcMaxPcs,
+    [`${label}_LS_Min_Pcs`]: lsMinPcs,
+    [`${label}_LS_Max_Pcs`]: lsMaxPcs,
   };
 };
 
