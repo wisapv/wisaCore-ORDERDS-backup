@@ -32,12 +32,12 @@ const appendStageWarnings = (warnings, stage, stageWarnings = []) => {
   stageWarnings.forEach((warning) => warnings.push({ stage, warning }));
 };
 
-const buildBoxKey = ({ partMasterRow, addressRow }) => removeSpaces([
+const buildBoxKey = ({ partMasterRow, addressRow, partForBoxKey }) => removeSpaces([
   partMasterRow?.SUPL ?? '',
   partMasterRow?.SupplierPlant ?? '',
   partMasterRow?.['S.DOCK'] ?? '',
   addressRow.DOCK ?? '',
-  addressRow['PART #'] ?? '',
+  partForBoxKey ?? '',
   addressRow['Kanban Print Address'] ?? '',
 ].join(''));
 
@@ -111,6 +111,7 @@ export const processCalBase = ({ files, targetMonth, workingDayN1, workingDayN2,
   const freqLpByKey = indexBy(freqLpResult.rows, 'FreqLpKey');
   const boxLayerByKey = indexBy(orderSummaryResult.rows, 'BoxKey');
   const setPartByKey = indexBy(setPartResult.rows, 'SetKey');
+  const setKeyDependByKey = indexBy(setPartResult.rows.filter((row) => row.PType === '1-Key'), 'SetKey');
   const alarms = [];
   let nqcMissingRows = 0;
   let partMasterMissingRows = 0;
@@ -166,7 +167,10 @@ export const processCalBase = ({ files, targetMonth, workingDayN1, workingDayN2,
 
     const setKey = `${addressRow.DOCK}${cleanPart}`;
     const setPartRow = setPartByKey.get(setKey);
-    const boxKey = buildBoxKey({ partMasterRow, addressRow });
+    const dependRow = setKeyDependByKey.get(setKey);
+    const dependPart = dependRow?.Depend ?? 'X';
+    const partForBoxKey = dependPart === 'X' ? cleanPart : partNoClean(dependPart);
+    const boxKey = buildBoxKey({ partMasterRow, addressRow, partForBoxKey });
     const boxLayerRow = boxLayerByKey.get(boxKey);
 
     if (!boxLayerRow) {
@@ -229,6 +233,7 @@ export const processCalBase = ({ files, targetMonth, workingDayN1, workingDayN2,
       SetPartPType: setPartRow?.PType ?? null,
       SetPartKeyPart: setPartRow?.['Key Part'] ?? null,
       SetPartDepend: setPartRow?.Depend ?? null,
+      SetPartDependUsed: dependPart,
       BoxKey: boxKey,
       BoxLayer: boxLayerRow?.BoxLayer ?? null,
       LookupStatus: buildLookupStatus(rowAlarms),
