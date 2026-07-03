@@ -12,6 +12,7 @@ const makeRow = (overrides = {}) => ({
 
 const calculateOne = (row) => calculateMinMaxFromCalBase({
   calBaseResult: { rows: [row], warnings: [], alarms: [] }, targetMonth: '2025-10', targetDocks: ['S1', 'S4', 'SH'],
+  unitPerDay: 579, tackTime: 95,
 }).rows[0];
 
 assert.equal(excelRoundUp(1.01, 0), 2);

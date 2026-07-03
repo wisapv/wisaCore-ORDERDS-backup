@@ -387,6 +387,8 @@ export const processCalBaseUpload = (req, res) => {
       workingDayN2: req.body.workingDayN2,
       workingDayN3: req.body.workingDayN3,
       targetDocks: req.body.targetDocks,
+      unitPerDay: req.body.unitPerDay,
+      tackTime: req.body.tackTime,
     });
 
     if (result.errors?.length) {
@@ -435,6 +437,8 @@ export const calculateMinMaxUpload = (req, res) => {
       workingDayN2: req.body.workingDayN2,
       workingDayN3: req.body.workingDayN3,
       targetDocks: req.body.targetDocks,
+      unitPerDay: req.body.unitPerDay,
+      tackTime: req.body.tackTime,
     });
 
     if (result.errors?.length) {
@@ -479,6 +483,8 @@ export const auditRouteCodeUpload = (req, res) => {
       workingDayN2: req.body.workingDayN2,
       workingDayN3: req.body.workingDayN3,
       targetDocks: req.body.targetDocks,
+      unitPerDay: req.body.unitPerDay,
+      tackTime: req.body.tackTime,
     });
 
     if (result.errors?.length) {
