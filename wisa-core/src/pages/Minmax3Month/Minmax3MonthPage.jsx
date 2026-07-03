@@ -1,4 +1,5 @@
 import { CheckCircle2, ChevronDown, LoaderCircle, Play, Server, XCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import Header from '../../components/Header.jsx';
 import MinmaxActionPanel from './components/MinmaxActionPanel.jsx';
 import MinmaxConfigPanel from './components/MinmaxConfigPanel.jsx';
@@ -36,20 +37,39 @@ function HealthPill({ health }) {
   );
 }
 
+const CALCULATING_PROGRESS_LABELS = ['กำลังอ่านไฟล์...', 'กำลังจับคู่ข้อมูล...', 'กำลังคำนวณสูตร Min-Max...'];
+
 function CalculateButton({ action, isLoading, disabled }) {
+  const [progressIndex, setProgressIndex] = useState(0);
+
+  useEffect(() => {
+    if (!isLoading) return undefined;
+
+    const interval = setInterval(() => {
+      setProgressIndex((current) => (current + 1) % CALCULATING_PROGRESS_LABELS.length);
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
   if (!action) return null;
+
+  const handleClick = () => {
+    setProgressIndex(0);
+    action.onClick();
+  };
 
   return (
     <button
       type="button"
-      onClick={action.onClick}
+      onClick={handleClick}
       disabled={disabled}
       className="w-full bg-wisa-pink text-white py-5 rounded-[24px] text-base font-bold tracking-widest uppercase hover:shadow-[0_0_28px_rgba(233,30,140,0.4)] hover:bg-pink-500 transition-all duration-300 disabled:opacity-50 disabled:hover:shadow-none flex items-center justify-center gap-3"
     >
       {isLoading ? (
         <span className="flex items-center justify-center gap-2">
           <LoaderCircle className="animate-spin" size={20} />
-          {action.loadingLabel}
+          {CALCULATING_PROGRESS_LABELS[progressIndex]}
         </span>
       ) : (
         <span className="flex items-center justify-center gap-2">
@@ -61,6 +81,17 @@ function CalculateButton({ action, isLoading, disabled }) {
   );
 }
 
+const REQUIRED_FILE_ERROR_MESSAGE = (key) => `${key} file is required`;
+
+function buildFileErrors(results) {
+  const relevantErrors = [...(results.validation?.errors || []), ...(results.minmax?.errors || [])];
+  return REQUIRED_FILES.reduce((fileErrors, item) => {
+    const match = relevantErrors.find((message) => message === REQUIRED_FILE_ERROR_MESSAGE(item.key));
+    if (match) fileErrors[item.key] = match;
+    return fileErrors;
+  }, {});
+}
+
 export default function Minmax3MonthPage() {
   const health = useMinmaxHealth();
   const { files, config, handleFileChange, handleConfigChange } = useMinmaxFiles();
@@ -69,6 +100,7 @@ export default function Minmax3MonthPage() {
   const selectedFileLabel = `${selectedCount}/${REQUIRED_FILES.length} selected`;
   const minmaxAction = actions.find((action) => action.key === 'minmax');
   const debugActions = actions.filter((action) => action.key !== 'minmax');
+  const fileErrors = buildFileErrors(results);
 
   return (
     <div className="min-h-full bg-slate-50 text-slate-950 flex flex-col gap-6">
@@ -88,7 +120,7 @@ export default function Minmax3MonthPage() {
             <span className="text-sm font-bold text-slate-950">{selectedFileLabel}</span>
             <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Required files</span>
           </div>
-          <MinmaxUploadGrid files={files} onFileChange={handleFileChange} />
+          <MinmaxUploadGrid files={files} onFileChange={handleFileChange} fileErrors={fileErrors} />
           <MinmaxConfigPanel config={config} onConfigChange={handleConfigChange} />
         </div>
       </MinmaxSectionCard>

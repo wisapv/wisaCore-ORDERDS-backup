@@ -17,10 +17,10 @@ export default function MinmaxConfigPanel({ config, onConfigChange, variant = 'l
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <ConfigInput variant={variant} label="Target Month" placeholder="May-26 or 2026-05" helper="Example: May-26 or 2026-05" value={config.targetMonth} onChange={(value) => onConfigChange('targetMonth', value)} />
       <ConfigInput variant={variant} label="Working Day N+1" type="number" value={config.workingDayN1} onChange={(value) => onConfigChange('workingDayN1', value)} />
-      <ConfigInput variant={variant} label="Working Day N+2" type="number" value={config.workingDayN2} onChange={(value) => onConfigChange('workingDayN2', value)} />
-      <ConfigInput variant={variant} label="Working Day N+3" type="number" value={config.workingDayN3} onChange={(value) => onConfigChange('workingDayN3', value)} />
-      <ConfigInput variant={variant} label="Unit/Day" type="number" value={config.unitPerDay} onChange={(value) => onConfigChange('unitPerDay', value)} />
-      <ConfigInput variant={variant} label="Tack time (sec)" type="number" value={config.tackTime} onChange={(value) => onConfigChange('tackTime', value)} />
+      <ConfigInput variant={variant} label="Working Day N+2" type="number" placeholder="22" value={config.workingDayN2} onChange={(value) => onConfigChange('workingDayN2', value)} />
+      <ConfigInput variant={variant} label="Working Day N+3" type="number" placeholder="20" value={config.workingDayN3} onChange={(value) => onConfigChange('workingDayN3', value)} />
+      <ConfigInput variant={variant} label="Unit/Day" type="number" placeholder="579" value={config.unitPerDay} onChange={(value) => onConfigChange('unitPerDay', value)} />
+      <ConfigInput variant={variant} label="Tack time (sec)" type="number" placeholder="95" value={config.tackTime} onChange={(value) => onConfigChange('tackTime', value)} />
       {showDocks && <div className={`${dark ? 'border-white/5 bg-black/30 text-white/50' : 'border-slate-200 bg-slate-50 text-slate-600'} sm:col-span-2 flex flex-wrap items-center gap-2 rounded-2xl border p-3 text-xs`}>
         <span className="font-bold uppercase tracking-[0.16em]">Target docks</span>
         {TARGET_DOCKS.map((dock) => <span key={dock} className={`${dark ? 'border-wisa-pink/30 bg-wisa-pink/10' : 'border-wisa-pink/20 bg-white'} rounded-full border px-3 py-1 font-bold text-wisa-pink`}>{dock}</span>)}
