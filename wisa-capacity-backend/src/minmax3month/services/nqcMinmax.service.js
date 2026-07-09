@@ -3,6 +3,13 @@ import { sheetRowsToPreview } from './tableParser.service.js';
 
 const PREFERRED_NQC_SHEET = 'NQC Result transfer';
 
+const REQUIRED_FIELDS = ['Dock', 'PartNo', 'N', 'N1', 'N2', 'N3'];
+
+// Real NQC.xlsx files break N+1 down into a daily forecast (N1Day01..N1Day31, zero-padded,
+// exact header match only). These are optional - files without them fall back to the monthly
+// average, so they must never be added to REQUIRED_FIELDS.
+const N1_DAY_FIELDS = Array.from({ length: 31 }, (_, index) => `N1Day${String(index + 1).padStart(2, '0')}`);
+
 const FIELD_CANDIDATES = {
   Dock: ['Dock', 'DOCK', 'DockCode', 'D Dock', 'D.DOCK'],
   PartNo: ['PartNo', 'Part No', 'PartNo.', 'PART NO', 'PART #', 'Part #', 'Part Number'],
@@ -10,6 +17,7 @@ const FIELD_CANDIDATES = {
   N1: ['N+1', 'N1', 'N+1 Demand', 'N+1 Qty', 'N+1 QTY'],
   N2: ['N+2', 'N2', 'N+2 Demand', 'N+2 Qty', 'N+2 QTY'],
   N3: ['N+3', 'N3', 'N+3 Demand', 'N+3 Qty', 'N+3 QTY'],
+  ...Object.fromEntries(N1_DAY_FIELDS.map((field) => [field, [field]])),
 };
 
 const normalizeHeader = (value) => String(value ?? '').trim().toUpperCase().replace(/\s+/g, ' ');
@@ -96,7 +104,7 @@ const resolveColumns = (columns) => {
   Object.entries(FIELD_CANDIDATES).forEach(([field, candidates]) => {
     const candidateIndex = candidates.findIndex((candidate) => normalizedColumns.includes(normalizeHeader(candidate)));
     if (candidateIndex === -1) {
-      missing.push(field);
+      if (REQUIRED_FIELDS.includes(field)) missing.push(field);
       return;
     }
 
@@ -207,6 +215,11 @@ export const processNqc = ({ file, targetMonth, workingDayN1, workingDayN2, work
     };
   }
 
+  const hasN1DayColumns = N1_DAY_FIELDS.some((field) => resolved[field]);
+  if (!hasN1DayColumns) {
+    warnings.push('N1 daily columns not found, falling back to monthly average');
+  }
+
   const rawRows = sheetRows.slice(headerIndex + 1).filter((row) => row.some((cell) => String(cell ?? '').trim() !== ''));
   const groupedRows = new Map();
 
@@ -231,6 +244,22 @@ export const processNqc = ({ file, targetMonth, workingDayN1, workingDayN2, work
       if (value === null) warnings.push(`NQC row ${index + 1} has invalid ${field} demand`);
     });
 
+    let invalidN1DayCount = 0;
+    const n1DaySums = hasN1DayColumns ? N1_DAY_FIELDS.map((field) => {
+      const resolvedField = resolved[field];
+      if (!resolvedField) return 0;
+      const value = toNumber(getCell(row, resolvedField));
+      if (value === null) {
+        invalidN1DayCount += 1;
+        return 0;
+      }
+      return value;
+    }) : null;
+
+    if (invalidN1DayCount > 0) {
+      warnings.push(`NQC row ${index + 1} has ${invalidN1DayCount} invalid N1Day values`);
+    }
+
     const groupKey = `${nqcKey}||${dock}||${partNo}`;
     const current = groupedRows.get(groupKey) ?? {
       NQCKey: nqcKey,
@@ -240,17 +269,19 @@ export const processNqc = ({ file, targetMonth, workingDayN1, workingDayN2, work
       N1: 0,
       N2: 0,
       N3: 0,
+      N1DaySums: hasN1DayColumns ? Array(31).fill(0) : null,
     };
 
     current.N += demand.N ?? 0;
     current.N1 += demand.N1 ?? 0;
     current.N2 += demand.N2 ?? 0;
     current.N3 += demand.N3 ?? 0;
+    if (n1DaySums) n1DaySums.forEach((value, dayIndex) => { current.N1DaySums[dayIndex] += value; });
     groupedRows.set(groupKey, current);
   });
 
-  const rows = [...groupedRows.values()].map((row) => {
-    const n1PerDay = excelRoundUp(row.N1 / workingDayN1, 0);
+  const rows = [...groupedRows.values()].map(({ N1DaySums, ...row }) => {
+    const n1PerDay = N1DaySums ? Math.max(...N1DaySums) : excelRoundUp(row.N1 / workingDayN1, 0);
     const n2PerDay = excelRoundUp(row.N2 / workingDayN2, 0);
     const n3PerDay = excelRoundUp(row.N3 / workingDayN3, 0);
 
