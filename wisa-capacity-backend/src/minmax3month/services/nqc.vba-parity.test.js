@@ -31,7 +31,9 @@ assert.deepEqual(result.summary, {
   workingDayN2: 21,
   workingDayN3: 22,
 });
-assert.deepEqual(result.warnings, []);
+// This fixture has no N1Day01-31 columns, so N1PerDay must fall back to
+// ROUNDUP(N1 total / workingDayN1, 0) and warn about it.
+assert.deepEqual(result.warnings, ['N1 daily columns not found, falling back to monthly average']);
 assert.equal(result.rows.length, 1);
 assert.equal(result.rows[0].NQCKey, 'S152110F0F50B1');
 assert.equal(result.rows[0].Dock, 'S1');
@@ -111,6 +113,73 @@ assert.equal(realResult.rows[0].N1PerDay, 2);
 assert.equal(realResult.rows[0].N2PerDay, 2);
 assert.equal(realResult.rows[0].N3PerDay, 2);
 assert.equal(realResult.rows[0].MaxNqcPerDay, 2);
+// Fallback case: this header has no N1Day01-31 columns, so N1PerDay must still be derived
+// from ROUNDUP(monthly total / workingDayN1, 0), same as before this feature existed, with a warning.
+assert.deepEqual(realResult.warnings, ['N1 daily columns not found, falling back to monthly average']);
+
+// Daily-max case: real files break N+1 into a daily forecast (N1Day01..N1Day31). When those
+// columns are present, N1PerDay must be MAX(summed daily values), not ROUNDUP(monthly total /
+// workingDayN1) - chosen deliberately so the two methods give very different answers, proving
+// the daily-max path is actually used and not silently falling back.
+const dayHeaders = Array.from({ length: 31 }, (_, i) => `N1Day${String(i + 1).padStart(2, '0')}`);
+const dailyHeader = [...realHeader, ...dayHeaders];
+const makeDayValues = (day1, day2) => Array.from({ length: 31 }, (_, i) => (i === 0 ? day1 : i === 1 ? day2 : 0));
+
+// Two rows sharing the same Dock+PartNo, so grouping must sum each day across both rows:
+// day1 = 5+4=9, day2 = 3+6=9, all other days = 0 -> MAX = 9.
+// Monthly N+1 total (grouped) = 8+10 = 18; workingDayN1 = 20 -> ROUNDUP(18/20,0) = 1 (the wrong,
+// unused fallback value) - 9 vs 1 makes the two methods unambiguously distinct.
+const dailyRowA = [
+  'D1', 'V1', 'R1', 'IMP1', 'RPC1', 'S1', 'EXP1', 'SPC1',
+  'SD1', 'MSP1', '202605', 'CFC1', 'REEXP1', 'SRC1', 'DAILY-PART', 'OT1',
+  'LOT1', 'KAN1', 50, 'AICO1', 8, 'AICO2', 21, 'AICO3', 22, 'AICO4',
+  ...makeDayValues(5, 3),
+];
+const dailyRowB = [
+  'D2', 'V1', 'R1', 'IMP1', 'RPC1', 'S1', 'EXP1', 'SPC1',
+  'SD1', 'MSP1', '202605', 'CFC1', 'REEXP1', 'SRC1', 'DAILY-PART', 'OT1',
+  'LOT1', 'KAN1', 30, 'AICO1', 10, 'AICO2', 2, 'AICO3', 1, 'AICO4',
+  ...makeDayValues(4, 6),
+];
+assert.equal(dailyHeader.length, 57);
+assert.equal(dailyRowA.length, 57);
+
+const dailyFile = makeNqcWorkbookFile('NQC Result transfer', [dailyHeader, dailyRowA, dailyRowB]);
+const dailyResult = processNqc({
+  file: dailyFile,
+  targetMonth: 'May-26',
+  workingDayN1: 20,
+  workingDayN2: 21,
+  workingDayN3: 22,
+});
+assert.equal(dailyResult.errors, undefined);
+assert.equal(dailyResult.rows.length, 1);
+assert.equal(dailyResult.rows[0].NQCKey, 'S1DAILYPART');
+assert.equal(dailyResult.rows[0].N1, 18);
+assert.equal(dailyResult.rows[0].N1PerDay, 9);
+assert.equal(dailyResult.rows[0].N2PerDay, 2);
+assert.equal(dailyResult.rows[0].N3PerDay, 2);
+assert.equal(dailyResult.rows[0].MaxNqcPerDay, 9);
+assert.deepEqual(dailyResult.warnings, []);
+
+// A row with a genuinely invalid (non-numeric) N1Day value must produce exactly one aggregated
+// warning per row, not one warning per bad day.
+const dailyRowWithInvalid = [
+  'D3', 'V1', 'R1', 'IMP1', 'RPC1', 'S4', 'EXP1', 'SPC1',
+  'SD1', 'MSP1', '202605', 'CFC1', 'REEXP1', 'SRC1', 'BAD-DAY-PART', 'OT1',
+  'LOT1', 'KAN1', 10, 'AICO1', 8, 'AICO2', 21, 'AICO3', 22, 'AICO4',
+  ...(() => { const days = makeDayValues(5, 3); days[2] = 'oops'; days[3] = 'nope'; return days; })(),
+];
+const invalidDayFile = makeNqcWorkbookFile('NQC Result transfer', [dailyHeader, dailyRowWithInvalid]);
+const invalidDayResult = processNqc({
+  file: invalidDayFile,
+  targetMonth: 'May-26',
+  workingDayN1: 20,
+  workingDayN2: 21,
+  workingDayN3: 22,
+});
+assert.equal(invalidDayResult.rows[0].N1PerDay, 5);
+assert.deepEqual(invalidDayResult.warnings, ['NQC row 1 has 2 invalid N1Day values']);
 
 const missingSheetFile = makeNqcWorkbookFile('Other Sheet', [
   ['Dock', 'PartNo', 'N', 'N+1', 'N+2', 'N+3'],
