@@ -64,6 +64,54 @@ assert.deepEqual(mismatchResult.errors, [{
   dataCal: '202510',
 }]);
 
+// Regression guard: the real NQC.xlsx file uses "DockCode" (not "Dock") as the header text,
+// and has 26 real columns (A-Z) instead of the simplified 6-column header used above. If the
+// Dock field candidates ever stop including 'DockCode', this must fail with "required logical
+// field could not be resolved: Dock" instead of silently passing.
+const realHeader = [
+  'DataID', 'Version', 'Revision', 'Importer', 'RecevingPlantCode', 'DockCode', 'Exporter', 'SupPlantCode',
+  'ShippingDock', 'MSPOrderType', 'FirmPackingMonth', 'CFC', 'ReexportCode', 'Source', 'PartNo', 'OrderType',
+  'OrderLotSize', 'KanbanNo', 'N', 'NAICOCEPT', 'N+1', 'N1AICOCEPT', 'N+2', 'N2AICOCEPT', 'N+3', 'N3AICOCEPT',
+];
+// Column positions (0-based): DockCode=5, FirmPackingMonth=10 (=column K), PartNo=14, N=18, N+1=20, N+2=22, N+3=24.
+const realDataRow = [
+  'DATA1', 'V1', 'R1', 'IMP1', 'RPC1', 'S1', 'EXP1', 'SPC1',
+  'SD1', 'MSP1', '202605', 'CFC1', 'REEXP1', 'SRC1', '52110-F0F50-B1', 'OT1',
+  'LOT1', 'KAN1', 100, 'AICO1', 40, 'AICO2', 42, 'AICO3', 44, 'AICO4',
+];
+assert.equal(realHeader.length, 26);
+assert.equal(realDataRow.length, 26);
+assert.equal(realHeader[10], 'FirmPackingMonth');
+assert.equal(realDataRow[10], '202605');
+
+const realFile = makeNqcWorkbookFile('NQC Result transfer', [realHeader, realDataRow]);
+// Independently confirm (without touching the service's private helpers) that column K of the
+// data row - what readSheetCell(sheet, 'K2') reads - really is the FirmPackingMonth value.
+const realWorkbookForCellCheck = xlsx.read(realFile.buffer, { type: 'buffer' });
+const realSheetForCellCheck = realWorkbookForCellCheck.Sheets['NQC Result transfer'];
+assert.equal(realSheetForCellCheck['K2'].v, '202605');
+
+const realResult = processNqc({
+  file: realFile,
+  targetMonth: 'May-26',
+  workingDayN1: 20,
+  workingDayN2: 21,
+  workingDayN3: 22,
+});
+assert.equal(realResult.errors, undefined);
+assert.equal(realResult.rows.length, 1);
+assert.equal(realResult.rows[0].Dock, 'S1');
+assert.equal(realResult.rows[0].PartNo, '52110-F0F50-B1');
+assert.equal(realResult.rows[0].NQCKey, 'S152110F0F50B1');
+assert.equal(realResult.rows[0].N, 100);
+assert.equal(realResult.rows[0].N1, 40);
+assert.equal(realResult.rows[0].N2, 42);
+assert.equal(realResult.rows[0].N3, 44);
+assert.equal(realResult.rows[0].N1PerDay, 2);
+assert.equal(realResult.rows[0].N2PerDay, 2);
+assert.equal(realResult.rows[0].N3PerDay, 2);
+assert.equal(realResult.rows[0].MaxNqcPerDay, 2);
+
 const missingSheetFile = makeNqcWorkbookFile('Other Sheet', [
   ['Dock', 'PartNo', 'N', 'N+1', 'N+2', 'N+3'],
   ['S4', '123-ABC', 1, 1, 1, 1, '', '', '', '', '202605'],
