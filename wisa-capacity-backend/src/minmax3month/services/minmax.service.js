@@ -59,15 +59,11 @@ export const processCalBase = ({ files, targetMonth, workingDayN1, workingDayN2,
   const n1Days = toPositiveNumber(workingDayN1);
   const n2Days = toPositiveNumber(workingDayN2);
   const n3Days = toPositiveNumber(workingDayN3);
-  const unitPerDayValue = toPositiveNumber(unitPerDay);
-  const tackTimeValue = toPositiveNumber(tackTime);
   const validationErrors = [];
   if (!targetMonth) validationErrors.push('targetMonth is required');
   if (n1Days === null) validationErrors.push('workingDayN1 is required and must be a positive number');
   if (n2Days === null) validationErrors.push('workingDayN2 is required and must be a positive number');
   if (n3Days === null) validationErrors.push('workingDayN3 is required and must be a positive number');
-  if (unitPerDayValue === null) validationErrors.push('unitPerDay is required and must be a positive number');
-  if (tackTimeValue === null) validationErrors.push('tackTime is required and must be a positive number');
   if (validationErrors.length) return { message: 'Cal base processing failed', errors: validationErrors };
 
   const docks = normalizeDocks(targetDocks);
@@ -396,39 +392,7 @@ const calculateMonth = ({ label, nqcPerDay, row, routeCode, ratio, qtyPerCont, o
   };
 };
 
-const resolveReduceSupCap = (reduceSupCapByKey, calBaseKey) => {
-  if (!reduceSupCapByKey) return 0;
-  const raw = reduceSupCapByKey instanceof Map ? reduceSupCapByKey.get(calBaseKey) : reduceSupCapByKey[calBaseKey];
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : 0;
-};
-
-const computeSafetyTimes = ({ row, routeCode, ratio, orderFreq, qtyPerCont, maxNqcPerDay, unitPerDay, tackTime, reduceSupCap }) => {
-  const dock = String(row.DOCK).trim();
-  const v3 = excelRoundUp((Number(unitPerDay) / 24) * (Number(tackTime) / 60), 0);
-  const am3 = excelRoundUp((Number(unitPerDay) / 36) * (Number(tackTime) / 60), 0);
-  const pcDelLsDelBase = dock === 'S4' ? am3 : v3;
-
-  const boxOrderRatio = Number.isFinite(maxNqcPerDay) && Number.isFinite(ratio) && orderFreq > 0 && qtyPerCont > 0
-    ? (maxNqcPerDay * ratio) / orderFreq / qtyPerCont
-    : null;
-
-  const supCap = reduceSupCap !== 0 ? 0 : 20;
-  const prodAllowance = dock === 'S1' || dock === 'S4' ? 0 : 60;
-  const seqFluctuation = boxOrderRatio !== null && boxOrderRatio > 1.5 ? 0 : 30;
-  const pcSafetyTime = supCap + prodAllowance + seqFluctuation;
-
-  const pcDel = pcDelLsDelBase;
-  const lsDel = routeCode === 3 ? 17 : pcDelLsDelBase;
-  const abnormal = routeCode === 3 ? 8 : 23;
-  const lsSafetyTime = abnormal;
-
-  const totalSafetyTime = pcSafetyTime + lsSafetyTime;
-
-  return { pcDel, lsDel, supCap, prodAllowance, seqFluctuation, pcSafetyTime, lsSafetyTime, totalSafetyTime, boxOrderRatio };
-};
-
-export const calculateMinMaxFromCalBase = ({ calBaseResult, targetMonth, targetDocks, unitPerDay, tackTime, reduceSupCapByKey }) => {
+export const calculateMinMaxFromCalBase = ({ calBaseResult, targetMonth, targetDocks, unitPerDay, tackTime }) => {
   const warnings = [...(calBaseResult.warnings || [])];
   const alarms = [...(calBaseResult.alarms || [])];
   let okRows = 0;
@@ -441,22 +405,29 @@ export const calculateMinMaxFromCalBase = ({ calBaseResult, targetMonth, targetD
     const qtyPerCont = toNumberOrNull(row['QTY /CONT']);
     const orderFreq = toNumberOrNull(row.OrderFreqForCalculation);
     const boxLayer = toNumberOrNull(row.BoxLayer);
-    const maxNqcPerDay = toNumberOrNull(row.MaxNqcPerDay);
+    // e-kanban data straight from PartMaster.txt (previous month's actuals) - more accurate
+    // than the old VBA SupCap/ProdAllowance/SeqFluctuation/Abnormal/V3/AM3 estimate formulas.
+    const pcSafetyTime = toNumberOrNull(row['PC SAFETY']);
+    const lsSafetyTime = toNumberOrNull(row['LS SAFTY']);
+    const pcDel = toNumberOrNull(row['PC DELIV']);
+    const lsDel = toNumberOrNull(row['LS DELIV']);
     const { Route, RouteCode, RouteSourceField, RouteSourceValue } = deriveRouteCode(row);
 
     if (!(ratio > 0)) formulaAlarms.push({ type: 'INVALID_DISTRIBUTION_RATIO', severity: 'ERROR' });
     if (!(qtyPerCont > 0)) formulaAlarms.push({ type: 'INVALID_QTY_PER_CONT', severity: 'ERROR' });
     if (!(orderFreq > 0) && RouteCode !== DISPLAY_ERROR) formulaAlarms.push({ type: 'INVALID_ORDER_FREQ', severity: 'ERROR' });
     if (boxLayer === null && RouteCode !== DISPLAY_ERROR) formulaAlarms.push({ type: 'BOX_LAYER_REQUIRED_FOR_MAX', severity: 'ERROR' });
+    if (pcSafetyTime === null) formulaAlarms.push({ type: 'INVALID_PC_SAFETY', severity: 'ERROR' });
+    if (lsSafetyTime === null) formulaAlarms.push({ type: 'INVALID_LS_SAFETY', severity: 'ERROR' });
+    if (pcDel === null) formulaAlarms.push({ type: 'INVALID_PC_DELIV', severity: 'ERROR' });
+    if (lsDel === null) formulaAlarms.push({ type: 'INVALID_LS_DELIV', severity: 'ERROR' });
 
-    const reduceSupCap = resolveReduceSupCap(reduceSupCapByKey, row.CalBaseKey);
-    const { pcDel, lsDel, supCap, prodAllowance, seqFluctuation, pcSafetyTime, lsSafetyTime, totalSafetyTime, boxOrderRatio } = computeSafetyTimes({ row, routeCode: RouteCode, ratio, orderFreq, qtyPerCont, maxNqcPerDay, unitPerDay, tackTime, reduceSupCap });
+    const totalSafetyTime = pcSafetyTime !== null && lsSafetyTime !== null ? pcSafetyTime + lsSafetyTime : null;
 
     const output = {
       ...row, Route, RouteCode, RouteSourceField, RouteSourceValue,
       PCSafetyTime: pcSafetyTime, LSSafetyTime: lsSafetyTime, TotalSafetyTime: totalSafetyTime,
-      PcDel: pcDel, LsDel: lsDel, SupCap: supCap, ProdAllowance: prodAllowance, SeqFluctuation: seqFluctuation,
-      BoxOrderRatio: boxOrderRatio, ReduceSupCap: reduceSupCap,
+      PcDel: pcDel, LsDel: lsDel,
     };
 
     monthFields.forEach(({ label, nqcField }) => {
@@ -478,10 +449,10 @@ export const calculateMinMaxFromCalBase = ({ calBaseResult, targetMonth, targetD
   return { summary: { calBaseRows: calBaseResult.rows?.length || 0, outputRows: rows.length, okRows, warningRows, errorRows, targetMonth, targetDocks }, rows, warnings, alarms };
 };
 
-export const calculateMinMax = ({ files, targetMonth, workingDayN1, workingDayN2, workingDayN3, targetDocks, asOfDate, unitPerDay, tackTime, reduceSupCapByKey }) => {
+export const calculateMinMax = ({ files, targetMonth, workingDayN1, workingDayN2, workingDayN3, targetDocks, asOfDate, unitPerDay, tackTime }) => {
   const calBaseResult = processCalBase({ files, targetMonth, workingDayN1, workingDayN2, workingDayN3, targetDocks, asOfDate, unitPerDay, tackTime });
   if (calBaseResult.errors?.length) return calBaseResult;
-  return calculateMinMaxFromCalBase({ calBaseResult, targetMonth, targetDocks: normalizeDocks(targetDocks), unitPerDay, tackTime, reduceSupCapByKey });
+  return calculateMinMaxFromCalBase({ calBaseResult, targetMonth, targetDocks: normalizeDocks(targetDocks), unitPerDay, tackTime });
 };
 
 const ROUTE_AUDIT_FIELDS = ['P/C Add', 'PC Add', 'PCAdd', 'Kanban Print Address', 'Lineside Address', 'Conveyance Route(External)', 'Conveyance Route(Internal)', 'Production Routing', 'RouteSourceField'];

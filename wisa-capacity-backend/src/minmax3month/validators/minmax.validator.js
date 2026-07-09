@@ -61,13 +61,9 @@ export const validateMinmaxUpload = ({ files = {}, body = {} }) => {
     errors.push('workingDayN3 is required and must be a positive number');
   }
 
-  if (unitPerDay === null) {
-    errors.push('unitPerDay is required and must be a positive number');
-  }
-
-  if (tackTime === null) {
-    errors.push('tackTime is required and must be a positive number');
-  }
+  // unitPerDay/tackTime are optional: they're no longer used to derive PcSafetyTime/LsSafetyTime
+  // (now sourced directly from PartMaster.txt), but are still accepted and kept in config in case
+  // a future feature needs them.
 
   return {
     errors,
