@@ -4,6 +4,7 @@ import Header from '../../components/Header.jsx';
 import MinmaxActionPanel from './components/MinmaxActionPanel.jsx';
 import MinmaxConfigPanel from './components/MinmaxConfigPanel.jsx';
 import MinmaxResultCard from './components/MinmaxResultCard.jsx';
+import MinmaxResultsPanel from './components/MinmaxResultsPanel.jsx';
 import MinmaxSectionCard from './components/MinmaxSectionCard.jsx';
 import MinmaxStatusBadge from './components/MinmaxStatusBadge.jsx';
 import MinmaxUploadGrid from './components/MinmaxUploadGrid.jsx';
@@ -127,7 +128,7 @@ export default function Minmax3MonthPage() {
 
       <CalculateButton action={minmaxAction} isLoading={loading.minmax} disabled={anyLoading} />
 
-      <div id="main-result-slot" />
+      <MinmaxResultsPanel result={results.minmax} />
 
       <details className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-500 marker:hidden">

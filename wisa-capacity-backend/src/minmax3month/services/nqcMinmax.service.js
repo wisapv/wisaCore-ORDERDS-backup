@@ -4,7 +4,7 @@ import { sheetRowsToPreview } from './tableParser.service.js';
 const PREFERRED_NQC_SHEET = 'NQC Result transfer';
 
 const FIELD_CANDIDATES = {
-  Dock: ['Dock', 'DOCK', 'D Dock', 'D.DOCK'],
+  Dock: ['Dock', 'DOCK', 'DockCode', 'D Dock', 'D.DOCK'],
   PartNo: ['PartNo', 'Part No', 'PartNo.', 'PART NO', 'PART #', 'Part #', 'Part Number'],
   N: ['N', 'N Demand', 'N Qty', 'N QTY'],
   N1: ['N+1', 'N1', 'N+1 Demand', 'N+1 Qty', 'N+1 QTY'],
