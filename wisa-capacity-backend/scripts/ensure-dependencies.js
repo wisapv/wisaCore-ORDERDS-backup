@@ -2,7 +2,7 @@ import { createRequire } from 'node:module';
 import { spawnSync } from 'node:child_process';
 
 const require = createRequire(import.meta.url);
-const requiredPackages = ['express', 'cors', 'dotenv', 'multer', 'xlsx', 'exceljs'];
+const requiredPackages = ['express', 'cors', 'dotenv', 'multer', 'xlsx', 'exceljs', 'pg'];
 
 const missingPackages = requiredPackages.filter((packageName) => {
   try {

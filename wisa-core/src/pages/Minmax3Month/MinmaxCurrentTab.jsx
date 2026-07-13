@@ -1,17 +1,14 @@
-import { CheckCircle2, ChevronDown, LoaderCircle, Play, Server, XCircle } from 'lucide-react';
+import { ChevronDown, LoaderCircle, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import Header from '../../components/Header.jsx';
 import MinmaxActionPanel from './components/MinmaxActionPanel.jsx';
 import MinmaxConfigPanel from './components/MinmaxConfigPanel.jsx';
 import MinmaxResultCard from './components/MinmaxResultCard.jsx';
 import MinmaxResultsPanel from './components/MinmaxResultsPanel.jsx';
 import MinmaxSectionCard from './components/MinmaxSectionCard.jsx';
-import MinmaxStatusBadge from './components/MinmaxStatusBadge.jsx';
 import MinmaxUploadGrid from './components/MinmaxUploadGrid.jsx';
 import { REQUIRED_FILES } from './constants/minmaxConstants.js';
 import { useMinmaxActions } from './hooks/useMinmaxActions.js';
 import { useMinmaxFiles } from './hooks/useMinmaxFiles.js';
-import { useMinmaxHealth } from './hooks/useMinmaxHealth.js';
 
 const DEBUG_RESULT_CARDS = [
   ['validation', 'Validation Result', 'Awaiting upload validation'],
@@ -25,18 +22,6 @@ const DEBUG_RESULT_CARDS = [
   ['orderSummary', 'Order Summary / BoxLayer Processing', 'Awaiting Order Summary processing'],
   ['setPart', 'SetPart Processing', 'Awaiting SetPart processing'],
 ];
-
-function HealthPill({ health }) {
-  const tone = health.status === 'connected' ? 'success' : health.status === 'loading' ? 'idle' : 'error';
-  const Icon = health.status === 'connected' ? CheckCircle2 : health.status === 'loading' ? LoaderCircle : XCircle;
-  return (
-    <MinmaxStatusBadge tone={tone} className="gap-1.5">
-      <Icon size={12} className={health.status === 'loading' ? 'animate-spin' : ''} />
-      <Server size={12} />
-      {health.message}
-    </MinmaxStatusBadge>
-  );
-}
 
 const CALCULATING_PROGRESS_LABELS = ['กำลังอ่านไฟล์...', 'กำลังจับคู่ข้อมูล...', 'กำลังคำนวณสูตร Min-Max...'];
 
@@ -93,8 +78,7 @@ function buildFileErrors(results) {
   }, {});
 }
 
-export default function Minmax3MonthPage() {
-  const health = useMinmaxHealth();
+export default function MinmaxCurrentTab({ onCalculateSuccess }) {
   const { files, config, handleFileChange, handleConfigChange } = useMinmaxFiles();
   const { actions, results, loading, anyLoading } = useMinmaxActions(files, config);
   const selectedCount = Object.values(files).filter(Boolean).length;
@@ -103,14 +87,12 @@ export default function Minmax3MonthPage() {
   const debugActions = actions.filter((action) => action.key !== 'minmax');
   const fileErrors = buildFileErrors(results);
 
+  useEffect(() => {
+    if (results.minmax?.success) onCalculateSuccess?.();
+  }, [results.minmax?.success, onCalculateSuccess]);
+
   return (
-    <div className="min-h-full bg-slate-50 text-slate-950 flex flex-col gap-6">
-      <Header title="Min-Max 3 Month" />
-
-      <div className="-mt-4 flex justify-end">
-        <HealthPill health={health} />
-      </div>
-
+    <>
       <MinmaxSectionCard
         eyebrow="Setup"
         title="Upload & Configure"
@@ -128,7 +110,7 @@ export default function Minmax3MonthPage() {
 
       <CalculateButton action={minmaxAction} isLoading={loading.minmax} disabled={anyLoading} />
 
-      <MinmaxResultsPanel result={results.minmax} />
+      <MinmaxResultsPanel result={results.minmax} targetMonth={config.targetMonth} />
 
       <details className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-500 marker:hidden">
@@ -144,6 +126,6 @@ export default function Minmax3MonthPage() {
           </div>
         </div>
       </details>
-    </div>
+    </>
   );
 }

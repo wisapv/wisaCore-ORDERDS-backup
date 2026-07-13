@@ -1,10 +1,9 @@
 import { CheckCircle2, Download, XCircle } from 'lucide-react';
 import { useState } from 'react';
+import { historyDownloadUrl } from '../constants/minmaxConstants.js';
+import MinmaxDataTable from './MinmaxDataTable.jsx';
 import MinmaxEmptyState from './MinmaxEmptyState.jsx';
-import MinmaxPreviewTable from './MinmaxPreviewTable.jsx';
 import MinmaxWarnings from './MinmaxWarnings.jsx';
-
-const DATA_TABLE_COLUMNS = ['DOCK', 'PART #', 'Route', 'N1_PC_Min_Box', 'N1_PC_Max_Box', 'N1_LS_Min_Box', 'N1_LS_Max_Box', 'FormulaStatus'];
 
 const METRIC_TONES = {
   neutral: 'border-slate-200 bg-slate-50 text-slate-700',
@@ -28,7 +27,7 @@ const TABS = [
   { key: 'export', label: 'Export' },
 ];
 
-export default function MinmaxResultsPanel({ result }) {
+export default function MinmaxResultsPanel({ result, targetMonth }) {
   const [activeTab, setActiveTab] = useState('data');
 
   if (!result) {
@@ -95,7 +94,7 @@ export default function MinmaxResultsPanel({ result }) {
         })}
       </div>
 
-      {activeTab === 'data' && <MinmaxPreviewTable title="First 20 Min-Max Rows" rows={rows} columns={DATA_TABLE_COLUMNS} />}
+      {activeTab === 'data' && <MinmaxDataTable rows={rows} targetMonth={targetMonth} />}
 
       {activeTab === 'warnings' && (
         warningAlarmCount === 0 ? (
@@ -112,14 +111,25 @@ export default function MinmaxResultsPanel({ result }) {
 
       {activeTab === 'export' && (
         <div className="flex flex-col items-start gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-6">
-          <button
-            type="button"
-            disabled
-            className="flex cursor-not-allowed items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold uppercase tracking-widest text-slate-400"
-          >
-            <Download size={16} /> Export to Excel
-          </button>
-          <p className="text-sm text-slate-500">การ export เป็น Excel ยังไม่พร้อมใช้งาน</p>
+          {result.historyId ? (
+            <a
+              href={historyDownloadUrl(result.historyId)}
+              className="flex items-center gap-2 rounded-2xl border border-wisa-pink bg-white px-5 py-3 text-sm font-bold uppercase tracking-widest text-wisa-pink transition-colors hover:bg-wisa-pink hover:text-white"
+            >
+              <Download size={16} /> Export to Excel
+            </a>
+          ) : (
+            <>
+              <button
+                type="button"
+                disabled
+                className="flex cursor-not-allowed items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold uppercase tracking-widest text-slate-400"
+              >
+                <Download size={16} /> Export to Excel
+              </button>
+              <p className="text-sm text-slate-500">ไม่พบไฟล์ Excel สำหรับผลลัพธ์นี้ (การบันทึกประวัติอาจไม่สำเร็จ)</p>
+            </>
+          )}
         </div>
       )}
     </section>

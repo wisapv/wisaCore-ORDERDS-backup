@@ -10,6 +10,8 @@ export const PROCESS_SET_PART_URL = 'http://localhost:3000/api/minmax3month/proc
 export const PROCESS_CAL_BASE_URL = 'http://localhost:3000/api/minmax3month/process-cal-base';
 export const CALCULATE_MINMAX_URL = 'http://localhost:3000/api/minmax3month/calculate-minmax';
 export const AUDIT_ROUTE_CODE_URL = 'http://localhost:3000/api/minmax3month/audit-route-code';
+export const HISTORY_URL = 'http://localhost:3000/api/minmax3month/history';
+export const historyDownloadUrl = (id) => `http://localhost:3000/api/minmax3month/history/${id}/download`;
 export const TARGET_DOCKS = ['S1', 'S4', 'SH'];
 export const MINMAX_THEME = {
   background: '#F8FAFC',

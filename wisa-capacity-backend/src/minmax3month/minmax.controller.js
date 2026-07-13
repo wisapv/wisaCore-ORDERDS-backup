@@ -6,6 +6,7 @@ import { parsePartMaster, processPartMaster } from './services/partMaster.servic
 import { parseSetPart, processSetPart } from './services/setPart.service.js';
 import { auditRouteCode, calculateMinMax, processCalBase } from './services/minmax.service.js';
 import { getUploadFileSummary, validateMinmaxUpload } from './validators/minmax.validator.js';
+import { getRunDetail, getRunExcelPath, listRuns, saveRun } from './services/minmaxHistory.service.js';
 
 export const healthCheck = (_req, res) => {
   res.json({ success: true, module: 'minmax3month' });
@@ -418,8 +419,8 @@ export const processCalBaseUpload = (req, res) => {
 };
 
 
-export const calculateMinMaxUpload = (req, res) => {
-  const { errors } = validateMinmaxUpload({ files: req.files, body: req.body });
+export const calculateMinMaxUpload = async (req, res) => {
+  const { errors, config } = validateMinmaxUpload({ files: req.files, body: req.body });
 
   if (errors.length) {
     return res.status(400).json({
@@ -432,13 +433,13 @@ export const calculateMinMaxUpload = (req, res) => {
   try {
     const result = calculateMinMax({
       files: req.files,
-      targetMonth: req.body.targetMonth,
-      workingDayN1: req.body.workingDayN1,
-      workingDayN2: req.body.workingDayN2,
-      workingDayN3: req.body.workingDayN3,
-      targetDocks: req.body.targetDocks,
-      unitPerDay: req.body.unitPerDay,
-      tackTime: req.body.tackTime,
+      targetMonth: config.targetMonth,
+      workingDayN1: config.workingDayN1,
+      workingDayN2: config.workingDayN2,
+      workingDayN3: config.workingDayN3,
+      targetDocks: config.targetDocks,
+      unitPerDay: config.unitPerDay,
+      tackTime: config.tackTime,
     });
 
     if (result.errors?.length) {
@@ -450,6 +451,15 @@ export const calculateMinMaxUpload = (req, res) => {
       });
     }
 
+    // The calculation itself already succeeded - a history/PostgreSQL failure (e.g. Postgres not
+    // installed or running) must not turn a successful calculation into a failed response.
+    let history = null;
+    try {
+      history = await saveRun({ targetMonth: config.targetMonth, config, result });
+    } catch (historyError) {
+      console.error('Failed to save Min-Max calculation history:', historyError.message);
+    }
+
     return res.json({
       success: true,
       message: 'Min-Max calculated',
@@ -457,6 +467,7 @@ export const calculateMinMaxUpload = (req, res) => {
       rows: result.rows,
       warnings: result.warnings,
       alarms: result.alarms,
+      ...(history ? { historyId: history.id, revision: history.revision } : {}),
     });
   } catch (error) {
     return res.status(400).json({
@@ -464,6 +475,55 @@ export const calculateMinMaxUpload = (req, res) => {
       message: 'Min-Max calculation failed',
       errors: [error.message],
     });
+  }
+};
+
+export const listMinMaxHistory = async (_req, res) => {
+  try {
+    const history = await listRuns();
+    return res.json({ success: true, history });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to load Min-Max history', errors: [error.message] });
+  }
+};
+
+export const getMinMaxHistoryDetail = async (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ success: false, message: 'Invalid history id' });
+  }
+
+  try {
+    const detail = await getRunDetail(id);
+
+    if (!detail) {
+      return res.status(404).json({ success: false, message: 'Min-Max history run not found' });
+    }
+
+    return res.json({ success: true, ...detail });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to load Min-Max history run', errors: [error.message] });
+  }
+};
+
+export const downloadMinMaxHistoryExcel = async (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ success: false, message: 'Invalid history id' });
+  }
+
+  try {
+    const excelPath = await getRunExcelPath(id);
+
+    if (!excelPath) {
+      return res.status(404).json({ success: false, message: 'Min-Max history run not found' });
+    }
+
+    return res.download(excelPath);
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to download Min-Max history file', errors: [error.message] });
   }
 };
 
