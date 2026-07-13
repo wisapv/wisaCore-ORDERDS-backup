@@ -15,12 +15,14 @@
     "test:cal-base": "node src/minmax3month/services/calBase.vba-parity.test.js",
     "test:minmax": "node src/minmax3month/services/minmax.vba-parity.test.js",
     "test:route-audit": "node src/minmax3month/services/routeAudit.vba-parity.test.js",
+    "test:excel-export": "node src/minmax3month/exporters/minmaxExcel.exporter.test.js",
     "predev": "node scripts/ensure-dependencies.js",
     "prestart": "node scripts/ensure-dependencies.js"
   },
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^16.4.5",
+    "exceljs": "^4.4.0",
     "express": "^4.22.2",
     "multer": "^1.4.5-lts.1",
     "xlsx": "^0.18.5"
