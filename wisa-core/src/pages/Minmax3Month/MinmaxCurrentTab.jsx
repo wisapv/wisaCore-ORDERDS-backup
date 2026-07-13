@@ -1,16 +1,14 @@
-import { ChevronDown, CheckCircle2, LoaderCircle, Play, Server, XCircle } from 'lucide-react';
+import { ChevronDown, LoaderCircle, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import MinmaxActionPanel from './components/MinmaxActionPanel.jsx';
 import MinmaxConfigPanel from './components/MinmaxConfigPanel.jsx';
 import MinmaxResultCard from './components/MinmaxResultCard.jsx';
 import MinmaxResultsPanel from './components/MinmaxResultsPanel.jsx';
 import MinmaxSectionCard from './components/MinmaxSectionCard.jsx';
-import MinmaxStatusBadge from './components/MinmaxStatusBadge.jsx';
 import MinmaxUploadGrid from './components/MinmaxUploadGrid.jsx';
 import { REQUIRED_FILES } from './constants/minmaxConstants.js';
 import { useMinmaxActions } from './hooks/useMinmaxActions.js';
 import { useMinmaxFiles } from './hooks/useMinmaxFiles.js';
-import { useMinmaxHealth } from './hooks/useMinmaxHealth.js';
 
 const DEBUG_RESULT_CARDS = [
   ['validation', 'Validation Result', 'Awaiting upload validation'],
@@ -24,18 +22,6 @@ const DEBUG_RESULT_CARDS = [
   ['orderSummary', 'Order Summary / BoxLayer Processing', 'Awaiting Order Summary processing'],
   ['setPart', 'SetPart Processing', 'Awaiting SetPart processing'],
 ];
-
-function HealthPill({ health }) {
-  const tone = health.status === 'connected' ? 'success' : health.status === 'loading' ? 'idle' : 'error';
-  const Icon = health.status === 'connected' ? CheckCircle2 : health.status === 'loading' ? LoaderCircle : XCircle;
-  return (
-    <MinmaxStatusBadge tone={tone} className="gap-1.5">
-      <Icon size={12} className={health.status === 'loading' ? 'animate-spin' : ''} />
-      <Server size={12} />
-      {health.message}
-    </MinmaxStatusBadge>
-  );
-}
 
 const CALCULATING_PROGRESS_LABELS = ['กำลังอ่านไฟล์...', 'กำลังจับคู่ข้อมูล...', 'กำลังคำนวณสูตร Min-Max...'];
 
@@ -93,7 +79,6 @@ function buildFileErrors(results) {
 }
 
 export default function MinmaxCurrentTab() {
-  const health = useMinmaxHealth();
   const { files, config, handleFileChange, handleConfigChange } = useMinmaxFiles();
   const { actions, results, loading, anyLoading } = useMinmaxActions(files, config);
   const selectedCount = Object.values(files).filter(Boolean).length;
@@ -104,10 +89,6 @@ export default function MinmaxCurrentTab() {
 
   return (
     <>
-      <div className="-mt-2 flex justify-end">
-        <HealthPill health={health} />
-      </div>
-
       <MinmaxSectionCard
         eyebrow="Setup"
         title="Upload & Configure"
