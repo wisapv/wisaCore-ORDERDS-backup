@@ -37,19 +37,25 @@ const solidFill = (argb) => ({ type: 'pattern', pattern: 'solid', fgColor: { arg
 const tintFill = (tint) => ({ type: 'pattern', pattern: 'solid', fgColor: { theme: 0, tint } });
 const fontBlack = (size) => ({ name: FONT_NAME, bold: true, size, color: { argb: 'FF000000' } });
 const fontWhite = (size) => ({ name: FONT_NAME, bold: true, size, color: { argb: 'FFFFFFFF' } });
+const fontData = () => ({ name: 'Calibri', size: 18, color: { argb: 'FF000000' } });
 const THIN = { style: 'thin', color: { argb: 'FF000000' } };
 const ALL_BORDERS = { top: THIN, left: THIN, bottom: THIN, right: THIN };
 const CENTER_MIDDLE = { horizontal: 'center', vertical: 'middle' };
 const HEADER_ALIGN = (wrap) => ({ horizontal: 'center', vertical: 'middle', textRotation: 90, wrapText: !!wrap });
+const WHITE = 'FFFFFFFF';
+const DATA_ROW_HEIGHT = 55;
+const HEADER_ROW7_HEIGHT = 280;
+const ORDER_FREQ_FOR_CALC_COLUMN = 23; // "W" - AL Req LP Design Freq / OrderFreqForCalculation
 
 const MMM_YY = 'mmm-yy';
 const MMM_YY_LOCALE = '[$-409]mmm-yy;@';
 
-const COLUMN_WIDTHS = [
-  7, 13.36, 8.27, 5.91, 7.09, 5.91, 17.18, 40.54, 9, 8, 10.82, 13, 5.73, 11.73, 5.73, 11.73, 10.27, 10.18, 7.18,
-  13.54, 13.54, 13.54, 13.82, 14.82, 9.63, 9.82, 8.91, 10.18, 10.91, 10.81, 6.73, 6.73, 6.73, 6.73, 6.73,
-  ...Array(32).fill(9.27),
-];
+// Baseline fill for cells in rows 2-6 that aren't part of a specific labeled/grouped header cell.
+const fillRowWhite = (sheet, rowIndex) => {
+  for (let c = 1; c <= LAST_COLUMN; c += 1) {
+    sheet.getRow(rowIndex).getCell(c).fill = solidFill(WHITE);
+  }
+};
 
 // ---- static row-7 header labels (columns 1-19, 25-35) -------------------
 
@@ -167,6 +173,7 @@ const buildRow1 = (sheet) => {
 
 const buildRow3 = (sheet, { unitPerDay, tackTime, issuedAt }) => {
   sheet.getRow(3).height = 60;
+  fillRowWhite(sheet, 3);
 
   const label = (address, text) => {
     const cell = sheet.getCell(address);
@@ -178,10 +185,10 @@ const buildRow3 = (sheet, { unitPerDay, tackTime, issuedAt }) => {
   const value = (address, val) => {
     const cell = sheet.getCell(address);
     cell.value = val === null || val === undefined ? '' : val;
-    cell.fill = solidFill('FFFFFFFF');
+    cell.fill = solidFill(WHITE);
     cell.font = fontBlack(28);
     cell.alignment = CENTER_MIDDLE;
-    cell.border = { left: THIN, top: THIN, bottom: THIN };
+    cell.border = ALL_BORDERS;
   };
 
   label('Y3', 'Unit / Day');
@@ -190,10 +197,7 @@ const buildRow3 = (sheet, { unitPerDay, tackTime, issuedAt }) => {
   sheet.getCell('Z3').font = fontWhite(18);
   sheet.getCell('Z3').alignment = CENTER_MIDDLE;
   value('AA3', unitPerDay ?? '');
-  sheet.getCell('AB3').value = unitPerDay ?? '';
-  sheet.getCell('AB3').fill = solidFill('FFFFFFFF');
-  sheet.getCell('AB3').font = fontBlack(28);
-  sheet.getCell('AB3').alignment = CENTER_MIDDLE;
+  value('AB3', unitPerDay ?? '');
 
   label('AD3', 'Takt Time');
   sheet.getCell('AE3').value = 'Takt Time';
@@ -201,19 +205,17 @@ const buildRow3 = (sheet, { unitPerDay, tackTime, issuedAt }) => {
   sheet.getCell('AE3').font = fontWhite(18);
   sheet.getCell('AE3').alignment = CENTER_MIDDLE;
   value('AF3', tackTime ?? '');
-  sheet.getCell('AG3').value = tackTime ?? '';
-  sheet.getCell('AG3').fill = solidFill('FFFFFFFF');
-  sheet.getCell('AG3').font = fontBlack(28);
-  sheet.getCell('AG3').alignment = CENTER_MIDDLE;
+  value('AG3', tackTime ?? '');
 
   const issued = sheet.getCell('BL3');
   issued.value = formatIssuedDate(issuedAt);
-  issued.fill = solidFill('FFFFFFFF');
+  issued.fill = solidFill(WHITE);
   issued.font = fontBlack(22);
 };
 
 const buildRow5 = (sheet) => {
   sheet.getRow(5).height = 31;
+  fillRowWhite(sheet, 5);
   const box = sheet.getCell('AJ5');
   box.value = 'BOX';
   box.fill = solidFill('FFA375FF');
@@ -243,6 +245,7 @@ const buildRow5 = (sheet) => {
 
 const buildRow6 = (sheet, { n1Month, n2Month, n3Month }) => {
   sheet.getRow(6).height = 35;
+  fillRowWhite(sheet, 6);
 
   const fillRange = (colStart, colEnd, fill, { numFmt } = {}) => {
     for (let c = colStart; c <= colEnd; c += 1) {
@@ -294,7 +297,7 @@ const buildRow6 = (sheet, { n1Month, n2Month, n3Month }) => {
 };
 
 const buildRow7 = (sheet, { baseMonth, n1Month, n2Month, n3Month }) => {
-  sheet.getRow(7).height = 134.5;
+  sheet.getRow(7).height = HEADER_ROW7_HEIGHT;
 
   for (let c = 1; c <= LAST_COLUMN; c += 1) {
     const cell = sheet.getRow(7).getCell(c);
@@ -426,7 +429,14 @@ const buildBoxPcsFormulas = (n) => ({
 
 const buildDataRow = (sheet, rowIndex, row) => {
   const excelRow = sheet.getRow(rowIndex);
-  excelRow.height = 22;
+  excelRow.height = DATA_ROW_HEIGHT;
+
+  for (let c = 1; c <= LAST_COLUMN; c += 1) {
+    const cell = excelRow.getCell(c);
+    cell.font = fontData();
+    cell.border = ALL_BORDERS;
+    cell.fill = solidFill(c === ORDER_FREQ_FOR_CALC_COLUMN ? 'FFFFFFCC' : WHITE);
+  }
 
   excelRow.getCell(1).value = row.FormulaStatus === 'ERROR' ? ERR_TEXT : '';
 
@@ -440,6 +450,33 @@ const buildDataRow = (sheet, rowIndex, row) => {
   });
 };
 
+// ---- column auto-fit --------------------------------------------------------
+
+// Formula cells show a computed result once Excel opens the file, not the formula text itself,
+// so their raw formula string would badly overstate the needed width - only the (fixed) row-7
+// header label drives width for those columns. Date cells are measured by their rendered
+// "mmm-yy" length (e.g. "Nov-25"), not the underlying Date object's own string form.
+const measureCellText = (value) => {
+  if (value === null || value === undefined || value === '') return 0;
+  if (value instanceof Date) return 6;
+  if (typeof value === 'object') return null;
+  return String(value).length;
+};
+
+const WIDTH_PADDING = 2;
+const MIN_COLUMN_WIDTH = 6;
+
+const applyAutoFitColumnWidths = (sheet, lastDataRow) => {
+  for (let c = 1; c <= LAST_COLUMN; c += 1) {
+    let max = measureCellText(sheet.getRow(7).getCell(c).value) ?? 0;
+    for (let r = FIRST_DATA_ROW; r <= lastDataRow; r += 1) {
+      const len = measureCellText(sheet.getRow(r).getCell(c).value);
+      if (len !== null) max = Math.max(max, len);
+    }
+    sheet.getColumn(c).width = Math.max(max + WIDTH_PADDING, MIN_COLUMN_WIDTH);
+  }
+};
+
 // ---- public API -------------------------------------------------------------
 
 export const buildMinMaxExcelWorkbook = ({ rows = [], targetMonth, unitPerDay, tackTime, issuedAt = new Date() }) => {
@@ -451,14 +488,12 @@ export const buildMinMaxExcelWorkbook = ({ rows = [], targetMonth, unitPerDay, t
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet(SHEET_NAME);
 
-  COLUMN_WIDTHS.forEach((width, index) => {
-    sheet.getColumn(index + 1).width = width;
-  });
-
   buildRow1(sheet);
   sheet.getRow(2).height = 10;
+  fillRowWhite(sheet, 2);
   buildRow3(sheet, { unitPerDay, tackTime, issuedAt });
   sheet.getRow(4).height = 10;
+  fillRowWhite(sheet, 4);
   buildRow5(sheet);
   buildRow6(sheet, { n1Month, n2Month, n3Month });
   buildRow7(sheet, { baseMonth, n1Month, n2Month, n3Month });
@@ -468,6 +503,9 @@ export const buildMinMaxExcelWorkbook = ({ rows = [], targetMonth, unitPerDay, t
   });
 
   MERGES.forEach((range) => sheet.mergeCells(range));
+
+  const lastDataRow = FIRST_DATA_ROW + rows.length - 1;
+  applyAutoFitColumnWidths(sheet, lastDataRow);
 
   return workbook;
 };

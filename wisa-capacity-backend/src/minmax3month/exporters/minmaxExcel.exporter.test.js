@@ -121,6 +121,53 @@ assert.equal(sheet.getCell('J8').value, 10); // QTY /CONT
 assert.equal(sheet.getCell('R8').value, 'DEPEND1'); // SetPartDependUsed
 assert.equal(sheet.getCell('S8').value, 4); // BoxLayer
 
+// --- Styling review round 2 (7 points) ---
+
+// 1. Row heights: header row 7 = 280, data rows (8+) = 55.
+assert.equal(sheet.getRow(7).height, 280);
+assert.equal(sheet.getRow(8).height, 55);
+
+// 2. Data row font is Calibri 18 (not the Arial Narrow used by header rows 1/3/5/6/7).
+assert.equal(sheet.getCell('F8').font.name, 'Calibri');
+assert.equal(sheet.getCell('F8').font.size, 18);
+assert.equal(sheet.getCell('A7').font.name, 'Arial Narrow'); // header rows unchanged
+
+// 3. Column width auto-fits to content instead of a fixed table - a column whose header text
+// is much longer than another's must end up strictly wider (content-driven, not a hardcoded value).
+assert.ok(
+  sheet.getColumn(14).width > sheet.getColumn(1).width,
+  `col N ("USE THIS Distribution Ratio", width=${sheet.getColumn(14).width}) should be wider than col A ("Error", width=${sheet.getColumn(1).width})`,
+);
+assert.ok(
+  sheet.getColumn(8).width > sheet.getColumn(6).width,
+  `col H ("Part Name"/"Part Desc", width=${sheet.getColumn(8).width}) should be wider than col F ("DOCK", width=${sheet.getColumn(6).width})`,
+);
+
+// 4. Rows 2-6 have a white background wherever no specific header/group style applies.
+['A2', 'A3', 'A5', 'A6', 'BO2', 'S6'].forEach((address) => {
+  assert.equal(sheet.getCell(address).fill.fgColor.argb, 'FFFFFFFF', `${address} should be white-filled`);
+});
+
+// 5. Unit/Day and Takt Time value cells have a full 4-side thin border (previously missing the
+// right-hand side).
+['AA3', 'AB3', 'AF3', 'AG3'].forEach((address) => {
+  const { border } = sheet.getCell(address);
+  ['top', 'left', 'bottom', 'right'].forEach((side) => {
+    assert.equal(border[side]?.style, 'thin', `${address} is missing a ${side} border`);
+  });
+});
+
+// 6. Data rows are white-filled with a full border, except column W (OrderFreqForCalculation),
+// which is pale yellow (#FFFFCC), only for rows that actually hold data (row 8 here).
+assert.equal(sheet.getCell('F8').fill.fgColor.argb, 'FFFFFFFF');
+assert.equal(sheet.getCell('W8').fill.fgColor.argb, 'FFFFFFCC');
+['F8', 'W8', 'A8', 'BO8'].forEach((address) => {
+  const { border } = sheet.getCell(address);
+  ['top', 'left', 'bottom', 'right'].forEach((side) => {
+    assert.equal(border[side]?.style, 'thin', `${address} is missing a ${side} border`);
+  });
+});
+
 console.log('minmaxExcel exporter happy-case, merge, style, and formula test passed');
 
 // --- Section 6.3 note: we deliberately do NOT evaluate formulas, only compare formula text. ---
