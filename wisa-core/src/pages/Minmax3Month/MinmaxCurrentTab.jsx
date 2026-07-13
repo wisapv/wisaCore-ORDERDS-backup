@@ -1,6 +1,5 @@
-import { CheckCircle2, ChevronDown, LoaderCircle, Play, Server, XCircle } from 'lucide-react';
+import { ChevronDown, CheckCircle2, LoaderCircle, Play, Server, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import Header from '../../components/Header.jsx';
 import MinmaxActionPanel from './components/MinmaxActionPanel.jsx';
 import MinmaxConfigPanel from './components/MinmaxConfigPanel.jsx';
 import MinmaxResultCard from './components/MinmaxResultCard.jsx';
@@ -93,7 +92,7 @@ function buildFileErrors(results) {
   }, {});
 }
 
-export default function Minmax3MonthPage() {
+export default function MinmaxCurrentTab() {
   const health = useMinmaxHealth();
   const { files, config, handleFileChange, handleConfigChange } = useMinmaxFiles();
   const { actions, results, loading, anyLoading } = useMinmaxActions(files, config);
@@ -104,10 +103,8 @@ export default function Minmax3MonthPage() {
   const fileErrors = buildFileErrors(results);
 
   return (
-    <div className="min-h-full bg-slate-50 text-slate-950 flex flex-col gap-6">
-      <Header title="Min-Max 3 Month" />
-
-      <div className="-mt-4 flex justify-end">
+    <>
+      <div className="-mt-2 flex justify-end">
         <HealthPill health={health} />
       </div>
 
@@ -144,6 +141,6 @@ export default function Minmax3MonthPage() {
           </div>
         </div>
       </details>
-    </div>
+    </>
   );
 }
