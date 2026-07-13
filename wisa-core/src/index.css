@@ -1,13 +1,25 @@
 @import "tailwindcss";
 
 @theme {
-  --color-wisa-dark:  #000000;
-  --color-wisa-pink:  #e91e8c;
-  --color-wisa-white: #f8f8f8;
+  --color-wisa-dark:  #2A211C;
+  --color-wisa-pink:  #E88BA8;
+  --color-wisa-white: #FCF3F3;
+  --color-wisa-blush: #FADCE0;
 }
 
 * { box-sizing: border-box; }
 body { margin: 0; font-family: 'Segoe UI', sans-serif; }
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.gradient-blob {
+  background: radial-gradient(circle, rgba(232, 139, 168, 0.25), rgba(250, 220, 224, 0.1) 70%);
+}
 
 /* เพิ่มต่อท้ายใน index.css */
 .custom-scrollbar::-webkit-scrollbar {
