@@ -1,6 +1,5 @@
-import { CheckCircle2, Download, XCircle } from 'lucide-react';
+import { CheckCircle2, XCircle } from 'lucide-react';
 import { useState } from 'react';
-import { historyDownloadUrl } from '../constants/minmaxConstants.js';
 import MinmaxDataTable from './MinmaxDataTable.jsx';
 import MinmaxEmptyState from './MinmaxEmptyState.jsx';
 import MinmaxWarnings from './MinmaxWarnings.jsx';
@@ -24,7 +23,6 @@ function MetricCard({ label, value, tone = 'neutral' }) {
 const TABS = [
   { key: 'data', label: 'Data table' },
   { key: 'warnings', label: 'Warnings & alarms' },
-  { key: 'export', label: 'Export' },
 ];
 
 export default function MinmaxResultsPanel({ result, targetMonth }) {
@@ -107,30 +105,6 @@ export default function MinmaxResultsPanel({ result, targetMonth }) {
             <MinmaxWarnings warnings={warnings} alarms={alarms} />
           </div>
         )
-      )}
-
-      {activeTab === 'export' && (
-        <div className="flex flex-col items-start gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-6">
-          {result.historyId ? (
-            <a
-              href={historyDownloadUrl(result.historyId)}
-              className="flex items-center gap-2 rounded-2xl border border-wisa-pink bg-white px-5 py-3 text-sm font-bold uppercase tracking-widest text-wisa-pink transition-colors hover:bg-wisa-pink hover:text-white"
-            >
-              <Download size={16} /> Export to Excel
-            </a>
-          ) : (
-            <>
-              <button
-                type="button"
-                disabled
-                className="flex cursor-not-allowed items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold uppercase tracking-widest text-slate-400"
-              >
-                <Download size={16} /> Export to Excel
-              </button>
-              <p className="text-sm text-slate-500">ไม่พบไฟล์ Excel สำหรับผลลัพธ์นี้ (การบันทึกประวัติอาจไม่สำเร็จ)</p>
-            </>
-          )}
-        </div>
       )}
     </section>
   );
