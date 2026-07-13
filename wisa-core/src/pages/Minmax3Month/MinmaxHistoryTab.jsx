@@ -4,37 +4,7 @@ import MinmaxEmptyState from './components/MinmaxEmptyState.jsx';
 import MinmaxSectionCard from './components/MinmaxSectionCard.jsx';
 import MinmaxStatusBadge from './components/MinmaxStatusBadge.jsx';
 import { HISTORY_URL, historyDownloadUrl } from './constants/minmaxConstants.js';
-
-const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-// targetMonth is a free-text field on the Current tab (e.g. "2025-10" or "Nov-25"), so history
-// rows can carry either format - parse both into a comparable {year, month} instead of trusting
-// a raw string DESC sort (which would put "Nov-25" before "2025-10" alphabetically, not
-// chronologically).
-function parseMonthValue(targetMonth) {
-  const raw = String(targetMonth ?? '').trim();
-
-  const abbrMatch = raw.match(/^([A-Za-z]{3})-(\d{2})$/);
-  if (abbrMatch) {
-    const monthIndex = MONTH_ABBR.findIndex((abbr) => abbr.toLowerCase() === abbrMatch[1].toLowerCase());
-    if (monthIndex !== -1) return { year: 2000 + Number(abbrMatch[2]), month: monthIndex + 1 };
-  }
-
-  const compact = raw.replace(/[-/\s]/g, '');
-  if (/^\d{6}$/.test(compact)) {
-    const year = Number(compact.slice(0, 4));
-    const month = Number(compact.slice(4, 6));
-    if (month >= 1 && month <= 12) return { year, month };
-  }
-
-  return null;
-}
-
-function formatMonthLabel(targetMonth) {
-  const parsed = parseMonthValue(targetMonth);
-  if (!parsed) return String(targetMonth ?? '-');
-  return `${MONTH_ABBR[parsed.month - 1]}-${String(parsed.year % 100).padStart(2, '0')}`;
-}
+import { MONTH_ABBR, formatMonthLabel, parseMonthValue } from './utils/monthLabel.js';
 
 function formatCreatedAt(isoString) {
   const date = new Date(isoString);

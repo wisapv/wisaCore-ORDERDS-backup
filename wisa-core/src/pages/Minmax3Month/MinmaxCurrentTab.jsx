@@ -78,7 +78,7 @@ function buildFileErrors(results) {
   }, {});
 }
 
-export default function MinmaxCurrentTab() {
+export default function MinmaxCurrentTab({ onCalculateSuccess }) {
   const { files, config, handleFileChange, handleConfigChange } = useMinmaxFiles();
   const { actions, results, loading, anyLoading } = useMinmaxActions(files, config);
   const selectedCount = Object.values(files).filter(Boolean).length;
@@ -86,6 +86,10 @@ export default function MinmaxCurrentTab() {
   const minmaxAction = actions.find((action) => action.key === 'minmax');
   const debugActions = actions.filter((action) => action.key !== 'minmax');
   const fileErrors = buildFileErrors(results);
+
+  useEffect(() => {
+    if (results.minmax?.success) onCalculateSuccess?.();
+  }, [results.minmax?.success, onCalculateSuccess]);
 
   return (
     <>
@@ -106,7 +110,7 @@ export default function MinmaxCurrentTab() {
 
       <CalculateButton action={minmaxAction} isLoading={loading.minmax} disabled={anyLoading} />
 
-      <MinmaxResultsPanel result={results.minmax} />
+      <MinmaxResultsPanel result={results.minmax} targetMonth={config.targetMonth} />
 
       <details className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-500 marker:hidden">
