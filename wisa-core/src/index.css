@@ -73,12 +73,13 @@ body { margin: 0; font-family: 'Manrope', sans-serif; }
   box-shadow: 0 16px 30px rgba(36, 31, 33, 0.24);
 }
 
-/* วงฟุ้งตกแต่งระดับหน้า (ไม่ใช่ระดับการ์ด) — fixed position มุมจอ ใช้ครั้งเดียวใน
-   MainLayout ไม่ใช้ซ้ำในทุกการ์ด */
+/* วงฟุ้งตกแต่งระดับหน้า (ไม่ใช่ระดับการ์ด) — scope อยู่ในหน้าเดียว (Overview) ไม่ใช่ทั้ง
+   viewport อีกต่อไป จึงใช้ position: absolute (ต้องอยู่ใน element ที่มี position: relative +
+   overflow: hidden กัน blob ล้นออกนอกกรอบ) */
 .page-decoration::before,
 .page-decoration::after {
   content: '';
-  position: fixed;
+  position: absolute;
   z-index: -1;
   border-radius: 50%;
   filter: blur(8px);

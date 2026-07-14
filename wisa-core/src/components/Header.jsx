@@ -1,9 +1,9 @@
 import { Search, Bell } from 'lucide-react';
 
-export default function Header({ title = 'Overview', showActions = true }) {
+export default function Header({ title = 'Overview', showActions = true, titleClassName = 'text-3xl font-bold' }) {
   return (
     <header className="flex justify-between items-center mb-8">
-      <h1 className="text-3xl font-bold text-wisa-dark">{title}</h1>
+      <h1 className={`${titleClassName} text-wisa-dark`}>{title}</h1>
       {showActions && (
         <div className="flex items-center gap-4">
           <button className="w-10 h-10 rounded-full bg-white/40 backdrop-blur-sm border border-white/30 flex items-center justify-center hover:bg-white/60 transition">
