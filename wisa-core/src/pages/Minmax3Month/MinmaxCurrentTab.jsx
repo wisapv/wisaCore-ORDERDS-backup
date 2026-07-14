@@ -59,7 +59,7 @@ function ExportButton({ result }) {
     return (
       <a
         href={historyDownloadUrl(result.historyId)}
-        className="w-full bg-wisa-dark text-white py-5 rounded-[24px] text-base font-bold tracking-widest uppercase hover:shadow-[0_0_28px_rgba(0,0,0,0.25)] hover:bg-black transition-all duration-300 flex items-center justify-center gap-3"
+        className="w-full bg-wisa-dark text-white py-5 rounded-[24px] text-base font-bold tracking-widest uppercase hover:shadow-[0_0_28px_rgba(36,31,33,0.25)] hover:bg-wisa-dark/90 transition-all duration-300 flex items-center justify-center gap-3"
       >
         <Download size={20} />
         Export to Excel
