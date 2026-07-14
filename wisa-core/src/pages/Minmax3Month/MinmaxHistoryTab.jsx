@@ -97,7 +97,7 @@ export default function MinmaxHistoryTab() {
               {runs.map((run, index) => (
                 <div key={run.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <MinmaxStatusBadge tone={index === 0 ? 'loading' : 'idle'}>REV {run.revision}</MinmaxStatusBadge>
+                    <MinmaxStatusBadge tone={index === 0 ? 'accent' : 'idle'}>REV {run.revision}</MinmaxStatusBadge>
                     <span className="text-sm text-slate-500">{formatCreatedAt(run.createdAt)}</span>
                   </div>
                   <a

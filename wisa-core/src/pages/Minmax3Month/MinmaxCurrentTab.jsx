@@ -1,27 +1,12 @@
-import { ChevronDown, LoaderCircle, Play } from 'lucide-react';
+import { Download, LoaderCircle, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import MinmaxActionPanel from './components/MinmaxActionPanel.jsx';
 import MinmaxConfigPanel from './components/MinmaxConfigPanel.jsx';
-import MinmaxResultCard from './components/MinmaxResultCard.jsx';
 import MinmaxResultsPanel from './components/MinmaxResultsPanel.jsx';
 import MinmaxSectionCard from './components/MinmaxSectionCard.jsx';
 import MinmaxUploadGrid from './components/MinmaxUploadGrid.jsx';
-import { REQUIRED_FILES } from './constants/minmaxConstants.js';
+import { REQUIRED_FILES, historyDownloadUrl } from './constants/minmaxConstants.js';
 import { useMinmaxActions } from './hooks/useMinmaxActions.js';
 import { useMinmaxFiles } from './hooks/useMinmaxFiles.js';
-
-const DEBUG_RESULT_CARDS = [
-  ['validation', 'Validation Result', 'Awaiting upload validation'],
-  ['preview', 'Preview Result', 'Awaiting file preview'],
-  ['calBase', 'Cal Base Processing', 'Awaiting Cal Base processing'],
-  ['routeAudit', 'RouteCode Audit', 'Awaiting RouteCode audit', true],
-  ['addressMaster', 'AddressMaster Processing', 'Awaiting AddressMaster processing'],
-  ['nqc', 'NQC Processing', 'Awaiting NQC processing'],
-  ['partMaster', 'PartMaster Processing', 'Awaiting PartMaster processing'],
-  ['freqLp', 'Freq_LP Processing', 'Awaiting Freq_LP processing'],
-  ['orderSummary', 'Order Summary / BoxLayer Processing', 'Awaiting Order Summary processing'],
-  ['setPart', 'SetPart Processing', 'Awaiting SetPart processing'],
-];
 
 const CALCULATING_PROGRESS_LABELS = ['กำลังอ่านไฟล์...', 'กำลังจับคู่ข้อมูล...', 'กำลังคำนวณสูตร Min-Max...'];
 
@@ -50,7 +35,7 @@ function CalculateButton({ action, isLoading, disabled }) {
       type="button"
       onClick={handleClick}
       disabled={disabled}
-      className="w-full bg-wisa-pink text-white py-5 rounded-[24px] text-base font-bold tracking-widest uppercase hover:shadow-[0_0_28px_rgba(233,30,140,0.4)] hover:bg-pink-500 transition-all duration-300 disabled:opacity-50 disabled:hover:shadow-none flex items-center justify-center gap-3"
+      className="btn-dark w-full py-5 text-base font-bold tracking-widest uppercase disabled:opacity-50 disabled:hover:shadow-none flex items-center justify-center gap-3"
     >
       {isLoading ? (
         <span className="flex items-center justify-center gap-2">
@@ -63,6 +48,34 @@ function CalculateButton({ action, isLoading, disabled }) {
           Calculate Min-Max
         </span>
       )}
+    </button>
+  );
+}
+
+function ExportButton({ result }) {
+  const canExport = Boolean(result?.success && result?.historyId);
+
+  if (canExport) {
+    return (
+      <a
+        href={historyDownloadUrl(result.historyId)}
+        className="btn-dark w-full py-5 text-base font-bold tracking-widest uppercase flex items-center justify-center gap-3"
+      >
+        <Download size={20} />
+        Export to Excel
+      </a>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      disabled
+      title="คำนวณ Min-Max ให้เสร็จก่อน ถึงจะ export เป็น Excel ได้"
+      className="w-full bg-slate-100 text-slate-400 py-5 rounded-[24px] text-base font-bold tracking-widest uppercase cursor-not-allowed flex items-center justify-center gap-3"
+    >
+      <Download size={20} />
+      Export to Excel
     </button>
   );
 }
@@ -84,7 +97,6 @@ export default function MinmaxCurrentTab({ onCalculateSuccess }) {
   const selectedCount = Object.values(files).filter(Boolean).length;
   const selectedFileLabel = `${selectedCount}/${REQUIRED_FILES.length} selected`;
   const minmaxAction = actions.find((action) => action.key === 'minmax');
-  const debugActions = actions.filter((action) => action.key !== 'minmax');
   const fileErrors = buildFileErrors(results);
 
   useEffect(() => {
@@ -97,6 +109,7 @@ export default function MinmaxCurrentTab({ onCalculateSuccess }) {
         eyebrow="Setup"
         title="Upload & Configure"
         description="Upload the six required source files and set the calculation config, then run the full Min-Max calculation in one step."
+        variant="strong"
       >
         <div className="flex flex-col gap-6">
           <div className="flex w-fit items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
@@ -112,20 +125,7 @@ export default function MinmaxCurrentTab({ onCalculateSuccess }) {
 
       <MinmaxResultsPanel result={results.minmax} targetMonth={config.targetMonth} />
 
-      <details className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-500 marker:hidden">
-          Advanced tools for debugging individual files
-          <ChevronDown size={18} className="text-slate-400" />
-        </summary>
-        <div className="mt-5 flex flex-col gap-6">
-          <MinmaxActionPanel actions={debugActions} loading={loading} disabled={anyLoading} wrapInDetails={false} />
-          <div className="flex flex-col gap-6">
-            {DEBUG_RESULT_CARDS.filter(([key]) => results[key]).map(([key, title, emptyText, important]) => (
-              <MinmaxResultCard key={key} title={title} result={results[key]} emptyText={emptyText} important={important} />
-            ))}
-          </div>
-        </div>
-      </details>
+      <ExportButton result={results.minmax} />
     </>
   );
 }

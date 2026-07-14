@@ -25,7 +25,7 @@ export default function Minmax3MonthTabs() {
   return (
     <div className="min-h-full bg-slate-50 text-slate-950 flex flex-col gap-6">
       <div className="flex justify-center">
-        <div className="flex gap-1 rounded-full bg-wisa-dark p-1">
+        <div className="card-strong flex gap-1 p-1">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.key;
             return (
@@ -34,7 +34,7 @@ export default function Minmax3MonthTabs() {
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
                 className={`rounded-full px-5 py-2 text-xs font-bold uppercase tracking-[0.1em] transition-colors ${
-                  isActive ? 'bg-wisa-white text-wisa-dark' : 'bg-transparent text-white/50 hover:text-white/80'
+                  isActive ? 'btn-dark' : 'bg-transparent text-wisa-dark/50 hover:text-wisa-dark/80'
                 }`}
               >
                 {tab.label}
