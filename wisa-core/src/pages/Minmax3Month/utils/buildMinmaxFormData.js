@@ -10,9 +10,6 @@ export const buildMinmaxFormData = (files, config) => {
     }
   });
   formData.append('targetMonth', config.targetMonth);
-  formData.append('workingDayN1', config.workingDayN1);
-  formData.append('workingDayN2', config.workingDayN2);
-  formData.append('workingDayN3', config.workingDayN3);
   formData.append('unitPerDay', config.unitPerDay);
   formData.append('tackTime', config.tackTime);
   formData.append('targetDocks', TARGET_DOCKS.join(','));

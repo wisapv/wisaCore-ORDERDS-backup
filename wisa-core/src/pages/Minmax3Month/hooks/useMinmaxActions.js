@@ -30,9 +30,6 @@ export function useMinmaxActions(files, config) {
       formData.append(fileKey, files[fileKey]);
     }
     formData.append('targetMonth', config.targetMonth);
-    formData.append('workingDayN1', config.workingDayN1);
-    formData.append('workingDayN2', config.workingDayN2);
-    formData.append('workingDayN3', config.workingDayN3);
     formData.append('targetDocks', TARGET_DOCKS.join(','));
     return formData;
   };

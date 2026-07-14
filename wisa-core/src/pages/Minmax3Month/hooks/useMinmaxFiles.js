@@ -5,7 +5,7 @@ const FILE_FIELDS_BY_KEY = REQUIRED_FILES.reduce((map, item) => ({ ...map, [item
 
 export function useMinmaxFiles() {
   const [files, setFiles] = useState(INITIAL_FILES);
-  const [config, setConfig] = useState({ targetMonth: '', workingDayN1: '', workingDayN2: '', workingDayN3: '', unitPerDay: '', tackTime: '' });
+  const [config, setConfig] = useState({ targetMonth: '', unitPerDay: '', tackTime: '' });
   // `selected` is a single File for regular fields, or a FileList/array for fields marked
   // multiple: true (currently just orderSummary) - normalize both shapes to what each field expects.
   const handleFileChange = (key, selected) => {

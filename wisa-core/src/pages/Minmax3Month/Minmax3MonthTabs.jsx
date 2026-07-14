@@ -19,6 +19,10 @@ export default function Minmax3MonthTabs() {
     setActiveTab('history');
   }, []);
 
+  const handleGoToSettings = useCallback(() => {
+    setActiveTab('settings');
+  }, []);
+
   return (
     <div className="minmax-surface custom-scrollbar h-full min-h-0 overflow-y-auto rounded-[40px] p-6 text-slate-950">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 pb-6">
@@ -48,7 +52,7 @@ export default function Minmax3MonthTabs() {
           <MinmaxHistoryTab key={historyRefreshKey} />
         </div>
         <div className={activeTab === 'current' ? 'flex flex-col gap-6' : 'hidden'}>
-          <MinmaxCurrentTab onCalculateSuccess={handleCalculateSuccess} />
+          <MinmaxCurrentTab onCalculateSuccess={handleCalculateSuccess} onGoToSettings={handleGoToSettings} />
         </div>
         <div className={activeTab === 'settings' ? 'flex flex-col gap-6' : 'hidden'}>
           <MinmaxSettingsTab />
