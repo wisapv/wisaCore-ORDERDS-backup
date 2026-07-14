@@ -12,6 +12,7 @@ export const CALCULATE_MINMAX_URL = 'http://localhost:3000/api/minmax3month/calc
 export const AUDIT_ROUTE_CODE_URL = 'http://localhost:3000/api/minmax3month/audit-route-code';
 export const HISTORY_URL = 'http://localhost:3000/api/minmax3month/history';
 export const historyDownloadUrl = (id) => `http://localhost:3000/api/minmax3month/history/${id}/download`;
+export const WORKING_DAYS_URL = 'http://localhost:3000/api/minmax3month/working-days';
 export const TARGET_DOCKS = ['S1', 'S4', 'SH'];
 export const MINMAX_THEME = {
   background: '#F8FAFC',

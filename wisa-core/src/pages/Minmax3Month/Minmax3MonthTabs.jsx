@@ -2,10 +2,12 @@ import { useCallback, useState } from 'react';
 import Header from '../../components/Header.jsx';
 import MinmaxCurrentTab from './MinmaxCurrentTab.jsx';
 import MinmaxHistoryTab from './MinmaxHistoryTab.jsx';
+import MinmaxSettingsTab from './MinmaxSettingsTab.jsx';
 
 const TABS = [
   { key: 'history', label: 'History' },
   { key: 'current', label: 'Current' },
+  { key: 'settings', label: 'Settings' },
 ];
 
 export default function Minmax3MonthTabs() {
@@ -47,6 +49,9 @@ export default function Minmax3MonthTabs() {
         </div>
         <div className={activeTab === 'current' ? 'flex flex-col gap-6' : 'hidden'}>
           <MinmaxCurrentTab onCalculateSuccess={handleCalculateSuccess} />
+        </div>
+        <div className={activeTab === 'settings' ? 'flex flex-col gap-6' : 'hidden'}>
+          <MinmaxSettingsTab />
         </div>
       </div>
     </div>
