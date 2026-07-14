@@ -1,6 +1,11 @@
-export default function MinmaxSectionCard({ eyebrow, title, description, actions, children, className = '' }) {
+const VARIANT_CLASSES = {
+  soft: 'card-soft p-5 md:p-6',
+  strong: 'card-strong p-5 md:p-6',
+};
+
+export default function MinmaxSectionCard({ eyebrow, title, description, actions, children, className = '', variant = 'soft' }) {
   return (
-    <section className={`rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6 ${className}`}>
+    <section className={`${VARIANT_CLASSES[variant] || VARIANT_CLASSES.soft} ${className}`}>
       {(eyebrow || title || description || actions) && (
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>

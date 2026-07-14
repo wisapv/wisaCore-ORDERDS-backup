@@ -86,7 +86,7 @@ export default function MinmaxDataTable({ rows = [], targetMonth }) {
               type="button"
               onClick={() => setSelectedMonth(option.key)}
               className={`rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors ${
-                isActive ? 'bg-wisa-pink text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                isActive ? 'btn-dark' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
               }`}
             >
               {monthLabels[option.key]}
@@ -108,7 +108,7 @@ export default function MinmaxDataTable({ rows = [], targetMonth }) {
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
+      <div className="overflow-hidden card-soft">
         <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
           <h3 className="font-bold tracking-wide text-slate-950">First 20 Min-Max Rows ({filteredRows.length} match{filteredRows.length === 1 ? '' : 'es'})</h3>
         </div>

@@ -35,7 +35,7 @@ function CalculateButton({ action, isLoading, disabled }) {
       type="button"
       onClick={handleClick}
       disabled={disabled}
-      className="w-full bg-wisa-pink text-white py-5 rounded-[24px] text-base font-bold tracking-widest uppercase hover:shadow-[0_0_28px_rgba(233,30,140,0.4)] hover:bg-pink-500 transition-all duration-300 disabled:opacity-50 disabled:hover:shadow-none flex items-center justify-center gap-3"
+      className="btn-dark w-full py-5 text-base font-bold tracking-widest uppercase disabled:opacity-50 disabled:hover:shadow-none flex items-center justify-center gap-3"
     >
       {isLoading ? (
         <span className="flex items-center justify-center gap-2">
@@ -59,7 +59,7 @@ function ExportButton({ result }) {
     return (
       <a
         href={historyDownloadUrl(result.historyId)}
-        className="w-full bg-wisa-dark text-white py-5 rounded-[24px] text-base font-bold tracking-widest uppercase hover:shadow-[0_0_28px_rgba(36,31,33,0.25)] hover:bg-wisa-dark/90 transition-all duration-300 flex items-center justify-center gap-3"
+        className="btn-dark w-full py-5 text-base font-bold tracking-widest uppercase flex items-center justify-center gap-3"
       >
         <Download size={20} />
         Export to Excel
@@ -109,6 +109,7 @@ export default function MinmaxCurrentTab({ onCalculateSuccess }) {
         eyebrow="Setup"
         title="Upload & Configure"
         description="Upload the six required source files and set the calculation config, then run the full Min-Max calculation in one step."
+        variant="strong"
       >
         <div className="flex flex-col gap-6">
           <div className="flex w-fit items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">

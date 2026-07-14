@@ -5,16 +5,16 @@ import MinmaxEmptyState from './MinmaxEmptyState.jsx';
 import MinmaxWarnings from './MinmaxWarnings.jsx';
 
 const METRIC_TONES = {
-  neutral: 'border-slate-200 bg-slate-50 text-slate-700',
-  success: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  warning: 'border-amber-200 bg-amber-50 text-amber-700',
-  danger: 'border-red-200 bg-red-50 text-red-700',
+  neutral: 'text-slate-700',
+  success: 'text-emerald-700',
+  warning: 'text-amber-700',
+  danger: 'text-red-700',
 };
 
 function MetricCard({ label, value, tone = 'neutral' }) {
   return (
-    <div className={`rounded-2xl border p-4 ${METRIC_TONES[tone]}`}>
-      <p className="text-[10px] font-bold uppercase tracking-[0.18em] opacity-70">{label}</p>
+    <div className="card-soft p-4">
+      <p className={`text-[10px] font-bold uppercase tracking-[0.18em] opacity-70 ${METRIC_TONES[tone]}`}>{label}</p>
       <p className="mt-2 text-2xl font-black text-slate-950">{value ?? '-'}</p>
     </div>
   );
@@ -30,7 +30,7 @@ export default function MinmaxResultsPanel({ result, targetMonth }) {
 
   if (!result) {
     return (
-      <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+      <section className="card-soft p-5 md:p-6">
         <MinmaxEmptyState message="ยังไม่ได้คำนวณ" suggestion="อัพโหลดไฟล์และกด Calculate Min-Max เพื่อดูผลลัพธ์ที่นี่" />
       </section>
     );
@@ -60,7 +60,7 @@ export default function MinmaxResultsPanel({ result, targetMonth }) {
   const warningAlarmCount = warnings.length + alarms.length;
 
   return (
-    <section className="rounded-[28px] border border-wisa-pink/30 bg-white p-5 shadow-sm ring-4 ring-wisa-pink/5 md:p-6">
+    <section className="card-soft ring-2 ring-wisa-pink/20 p-5 md:p-6">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-xl font-bold tracking-tight text-slate-950">Min-Max Calculation Result</h2>
         <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700">
