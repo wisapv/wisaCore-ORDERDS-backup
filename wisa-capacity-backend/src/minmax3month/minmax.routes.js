@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { auditRouteCodeUpload, calculateMinMaxUpload, downloadMinMaxHistoryExcel, getMinMaxHistoryDetail, healthCheck, listMinMaxHistory, previewUpload, processAddressMasterUpload, processCalBaseUpload, processFreqLpUpload, processNqcUpload, processOrderSummaryUpload, processPartMasterUpload, processSetPartUpload, validateUpload } from './minmax.controller.js';
+import { auditRouteCodeUpload, calculateMinMaxUpload, downloadMinMaxHistoryExcel, getMinMaxHistoryDetail, getWorkingDaySettings, healthCheck, listMinMaxHistory, previewUpload, processAddressMasterUpload, processCalBaseUpload, processFreqLpUpload, processNqcUpload, processOrderSummaryUpload, processPartMasterUpload, processSetPartUpload, updateWorkingDaySettings, validateUpload } from './minmax.controller.js';
 import { REQUIRED_FILE_FIELDS } from './validators/minmax.validator.js';
 
 const router = Router();
@@ -127,5 +127,8 @@ router.post('/audit-route-code', uploadValidationFiles, auditRouteCodeUpload);
 router.get('/history', listMinMaxHistory);
 router.get('/history/:id', getMinMaxHistoryDetail);
 router.get('/history/:id/download', downloadMinMaxHistoryExcel);
+
+router.get('/working-days', getWorkingDaySettings);
+router.put('/working-days', updateWorkingDaySettings);
 
 export default router;

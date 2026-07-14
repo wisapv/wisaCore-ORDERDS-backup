@@ -7,6 +7,7 @@ import { parseSetPart, processSetPart } from './services/setPart.service.js';
 import { auditRouteCode, calculateMinMax, processCalBase } from './services/minmax.service.js';
 import { getUploadFileSummary, validateMinmaxUpload } from './validators/minmax.validator.js';
 import { getRunDetail, getRunExcelPath, listRuns, saveRun } from './services/minmaxHistory.service.js';
+import { getYear, resolveWorkingDaysForTarget, upsertYear } from './services/workingDaySettings.service.js';
 
 export const healthCheck = (_req, res) => {
   res.json({ success: true, module: 'minmax3month' });
@@ -130,12 +131,7 @@ export const processAddressMasterUpload = (req, res) => {
 };
 
 
-const toPositiveNumber = (value) => {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-};
-
-export const processNqcUpload = (req, res) => {
+export const processNqcUpload = async (req, res) => {
   if (!req.file) {
     return res.status(400).json({
       success: false,
@@ -152,20 +148,14 @@ export const processNqcUpload = (req, res) => {
     });
   }
 
-  const workingDayN1 = toPositiveNumber(req.body.workingDayN1);
-  const workingDayN2 = toPositiveNumber(req.body.workingDayN2);
-  const workingDayN3 = toPositiveNumber(req.body.workingDayN3);
-  const errors = [];
-
-  if (workingDayN1 === null) errors.push('workingDayN1 is required and must be a positive number');
-  if (workingDayN2 === null) errors.push('workingDayN2 is required and must be a positive number');
-  if (workingDayN3 === null) errors.push('workingDayN3 is required and must be a positive number');
-
-  if (errors.length) {
+  let workingDays;
+  try {
+    workingDays = await resolveWorkingDaysForTarget(req.body.targetMonth);
+  } catch (error) {
     return res.status(400).json({
       success: false,
-      message: 'NQC processing failed',
-      errors,
+      message: error.message,
+      errors: [error.message],
     });
   }
 
@@ -173,9 +163,9 @@ export const processNqcUpload = (req, res) => {
     const result = processNqc({
       file: req.file,
       targetMonth: req.body.targetMonth,
-      workingDayN1,
-      workingDayN2,
-      workingDayN3,
+      workingDayN1: workingDays.workingDayN1,
+      workingDayN2: workingDays.workingDayN2,
+      workingDayN3: workingDays.workingDayN3,
     });
 
     if (result.errors?.length) {
@@ -369,7 +359,7 @@ export const processSetPartUpload = (req, res) => {
 };
 
 
-export const processCalBaseUpload = (req, res) => {
+export const processCalBaseUpload = async (req, res) => {
   const { errors } = validateMinmaxUpload({ files: req.files, body: req.body });
 
   if (errors.length) {
@@ -381,12 +371,9 @@ export const processCalBaseUpload = (req, res) => {
   }
 
   try {
-    const result = processCalBase({
+    const result = await processCalBase({
       files: req.files,
       targetMonth: req.body.targetMonth,
-      workingDayN1: req.body.workingDayN1,
-      workingDayN2: req.body.workingDayN2,
-      workingDayN3: req.body.workingDayN3,
       targetDocks: req.body.targetDocks,
       unitPerDay: req.body.unitPerDay,
       tackTime: req.body.tackTime,
@@ -431,12 +418,9 @@ export const calculateMinMaxUpload = async (req, res) => {
   }
 
   try {
-    const result = calculateMinMax({
+    const result = await calculateMinMax({
       files: req.files,
       targetMonth: config.targetMonth,
-      workingDayN1: config.workingDayN1,
-      workingDayN2: config.workingDayN2,
-      workingDayN3: config.workingDayN3,
       targetDocks: config.targetDocks,
       unitPerDay: config.unitPerDay,
       tackTime: config.tackTime,
@@ -528,7 +512,7 @@ export const downloadMinMaxHistoryExcel = async (req, res) => {
 };
 
 
-export const auditRouteCodeUpload = (req, res) => {
+export const auditRouteCodeUpload = async (req, res) => {
   const { errors } = validateMinmaxUpload({ files: req.files, body: req.body });
 
   if (errors.length) {
@@ -536,12 +520,9 @@ export const auditRouteCodeUpload = (req, res) => {
   }
 
   try {
-    const result = auditRouteCode({
+    const result = await auditRouteCode({
       files: req.files,
       targetMonth: req.body.targetMonth,
-      workingDayN1: req.body.workingDayN1,
-      workingDayN2: req.body.workingDayN2,
-      workingDayN3: req.body.workingDayN3,
       targetDocks: req.body.targetDocks,
       unitPerDay: req.body.unitPerDay,
       tackTime: req.body.tackTime,
@@ -561,5 +542,41 @@ export const auditRouteCodeUpload = (req, res) => {
     });
   } catch (error) {
     return res.status(400).json({ success: false, message: 'RouteCode audit failed', errors: [error.message] });
+  }
+};
+
+export const getWorkingDaySettings = async (req, res) => {
+  const year = Number(req.query.year);
+
+  if (!Number.isInteger(year)) {
+    return res.status(400).json({ success: false, message: 'year query parameter is required and must be an integer' });
+  }
+
+  try {
+    const months = await getYear(year);
+    return res.json({ success: true, year, months });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to load working day settings', errors: [error.message] });
+  }
+};
+
+export const updateWorkingDaySettings = async (req, res) => {
+  const year = Number(req.body.year);
+  const { months } = req.body;
+
+  if (!Number.isInteger(year)) {
+    return res.status(400).json({ success: false, message: 'year is required and must be an integer' });
+  }
+
+  if (!months || typeof months !== 'object') {
+    return res.status(400).json({ success: false, message: 'months is required and must be an object' });
+  }
+
+  try {
+    await upsertYear(year, months);
+    const updated = await getYear(year);
+    return res.json({ success: true, year, months: updated });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: 'Failed to update working day settings', errors: [error.message] });
   }
 };

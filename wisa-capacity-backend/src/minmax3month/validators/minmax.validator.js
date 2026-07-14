@@ -43,35 +43,21 @@ export const validateMinmaxUpload = ({ files = {}, body = {} }) => {
     errors.push('targetMonth is required');
   }
 
-  const workingDayN1 = toPositiveNumber(body.workingDayN1);
-  const workingDayN2 = toPositiveNumber(body.workingDayN2);
-  const workingDayN3 = toPositiveNumber(body.workingDayN3);
   const unitPerDay = toPositiveNumber(body.unitPerDay);
   const tackTime = toPositiveNumber(body.tackTime);
-
-  if (workingDayN1 === null) {
-    errors.push('workingDayN1 is required and must be a positive number');
-  }
-
-  if (workingDayN2 === null) {
-    errors.push('workingDayN2 is required and must be a positive number');
-  }
-
-  if (workingDayN3 === null) {
-    errors.push('workingDayN3 is required and must be a positive number');
-  }
 
   // unitPerDay/tackTime are optional: they're no longer used to derive PcSafetyTime/LsSafetyTime
   // (now sourced directly from PartMaster.txt), but are still accepted and kept in config in case
   // a future feature needs them.
 
+  // workingDayN1/N2/N3 are no longer accepted from the request body at all - they're resolved
+  // from working_day_settings (see workingDaySettings.service.js#resolveWorkingDaysForTarget)
+  // based on targetMonth instead, so there's nothing to validate or return here.
+
   return {
     errors,
     config: {
       targetMonth: body.targetMonth,
-      workingDayN1,
-      workingDayN2,
-      workingDayN3,
       unitPerDay,
       tackTime,
       targetDocks: normalizeTargetDocks(body.targetDocks),

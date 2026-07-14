@@ -4,6 +4,7 @@ import { processNqc } from './nqcMinmax.service.js';
 import { processOrderSummary } from './orderSummary.service.js';
 import { processPartMaster } from './partMaster.service.js';
 import { processSetPart } from './setPart.service.js';
+import { resolveWorkingDaysForTarget } from './workingDaySettings.service.js';
 import { DISPLAY_DASH, DISPLAY_ERROR, DISPLAY_NO_DATA, ROUTE1_LS_MAX_FIXED_FREQ, SAFETY_RATIO_BUFFER, SH_FIXED_ORDER_FREQ, WORKING_MINS_PER_DAY } from '../constants/minmax.constants.js';
 
 const REQUIRED_FILES = ['addressMaster', 'partMaster', 'nqc', 'freqLp', 'orderSummary', 'setPart'];
@@ -21,11 +22,6 @@ const normalizeDocks = (targetDocks) => {
   const docks = String(targetDocks ?? '').split(',').map((dock) => dock.trim()).filter(Boolean);
   return docks.length ? docks : ['S1', 'S4', 'SH'];
 };
-const toPositiveNumber = (value) => {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-};
-
 const failStage = (stage, result) => ({
   message: result.message || `${stage} processing failed`,
   errors: result.errors,
@@ -52,7 +48,7 @@ const buildLookupStatus = (alarms) => {
   return 'OK';
 };
 
-export const processCalBase = ({ files, targetMonth, workingDayN1, workingDayN2, workingDayN3, targetDocks, asOfDate, unitPerDay, tackTime }) => {
+export const processCalBase = async ({ files, targetMonth, targetDocks, asOfDate, unitPerDay, tackTime }) => {
   const missingFiles = REQUIRED_FILES.filter((key) => !pickFile(files, key));
   if (missingFiles.length) {
     return {
@@ -61,15 +57,16 @@ export const processCalBase = ({ files, targetMonth, workingDayN1, workingDayN2,
     };
   }
 
-  const n1Days = toPositiveNumber(workingDayN1);
-  const n2Days = toPositiveNumber(workingDayN2);
-  const n3Days = toPositiveNumber(workingDayN3);
-  const validationErrors = [];
-  if (!targetMonth) validationErrors.push('targetMonth is required');
-  if (n1Days === null) validationErrors.push('workingDayN1 is required and must be a positive number');
-  if (n2Days === null) validationErrors.push('workingDayN2 is required and must be a positive number');
-  if (n3Days === null) validationErrors.push('workingDayN3 is required and must be a positive number');
-  if (validationErrors.length) return { message: 'Cal base processing failed', errors: validationErrors };
+  if (!targetMonth) return { message: 'Cal base processing failed', errors: ['targetMonth is required'] };
+
+  let n1Days;
+  let n2Days;
+  let n3Days;
+  try {
+    ({ workingDayN1: n1Days, workingDayN2: n2Days, workingDayN3: n3Days } = await resolveWorkingDaysForTarget(targetMonth));
+  } catch (error) {
+    return { message: error.message, errors: [error.message] };
+  }
 
   const docks = normalizeDocks(targetDocks);
   const stageInputs = {
@@ -454,8 +451,8 @@ export const calculateMinMaxFromCalBase = ({ calBaseResult, targetMonth, targetD
   return { summary: { calBaseRows: calBaseResult.rows?.length || 0, outputRows: rows.length, okRows, warningRows, errorRows, targetMonth, targetDocks }, rows, warnings, alarms };
 };
 
-export const calculateMinMax = ({ files, targetMonth, workingDayN1, workingDayN2, workingDayN3, targetDocks, asOfDate, unitPerDay, tackTime }) => {
-  const calBaseResult = processCalBase({ files, targetMonth, workingDayN1, workingDayN2, workingDayN3, targetDocks, asOfDate, unitPerDay, tackTime });
+export const calculateMinMax = async ({ files, targetMonth, targetDocks, asOfDate, unitPerDay, tackTime }) => {
+  const calBaseResult = await processCalBase({ files, targetMonth, targetDocks, asOfDate, unitPerDay, tackTime });
   if (calBaseResult.errors?.length) return calBaseResult;
   return calculateMinMaxFromCalBase({ calBaseResult, targetMonth, targetDocks: normalizeDocks(targetDocks), unitPerDay, tackTime });
 };
@@ -491,8 +488,8 @@ export const auditRouteCodeFromCalBase = (calBaseResult) => {
     warnings: calBaseResult.warnings || [],
   };
 };
-export const auditRouteCode = ({ files, targetMonth, workingDayN1, workingDayN2, workingDayN3, targetDocks, asOfDate, unitPerDay, tackTime }) => {
-  const calBaseResult = processCalBase({ files, targetMonth, workingDayN1, workingDayN2, workingDayN3, targetDocks, asOfDate, unitPerDay, tackTime });
+export const auditRouteCode = async ({ files, targetMonth, targetDocks, asOfDate, unitPerDay, tackTime }) => {
+  const calBaseResult = await processCalBase({ files, targetMonth, targetDocks, asOfDate, unitPerDay, tackTime });
   if (calBaseResult.errors?.length) return calBaseResult;
   return auditRouteCodeFromCalBase(calBaseResult);
 };
