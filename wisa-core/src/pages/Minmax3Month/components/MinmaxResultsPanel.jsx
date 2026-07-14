@@ -25,6 +25,22 @@ const TABS = [
   { key: 'warnings', label: 'Warnings & alarms' },
 ];
 
+function ErrorItem({ error }) {
+  if (typeof error === 'string') return <li>{error}</li>;
+
+  if (error?.type === 'ORDER_SUMMARY_HEADER_MISMATCH') {
+    return (
+      <li>
+        Order Summary file #{error.fileIndex + 1} has a header row that doesn&apos;t match file #1
+        ({error.expectedColumns?.length ?? '?'} columns expected, {error.actualColumns?.length ?? '?'} found).
+        Every Order Summary file must have the exact same header row.
+      </li>
+    );
+  }
+
+  return <li>{JSON.stringify(error)}</li>;
+}
+
 export default function MinmaxResultsPanel({ result, targetMonth }) {
   const [activeTab, setActiveTab] = useState('data');
 
@@ -45,7 +61,7 @@ export default function MinmaxResultsPanel({ result, targetMonth }) {
             <h2 className="text-lg font-bold text-red-800">{result.message || 'Min-Max calculation failed'}</h2>
             {result.errors?.length > 0 && (
               <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-red-700">
-                {result.errors.map((error, index) => <li key={index}>{typeof error === 'string' ? error : JSON.stringify(error)}</li>)}
+                {result.errors.map((error, index) => <ErrorItem key={index} error={error} />)}
               </ul>
             )}
           </div>

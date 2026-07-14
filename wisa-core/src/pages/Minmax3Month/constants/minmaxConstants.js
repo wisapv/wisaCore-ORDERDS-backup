@@ -27,8 +27,11 @@ export const REQUIRED_FILES = [
   { key: 'partMaster', label: 'PartMaster', fileName: 'PartMaster.txt', accept: '.txt', typeLabel: 'TXT source file' },
   { key: 'nqc', label: 'NQC', fileName: 'NQC.xlsx', accept: '.xlsx,.xls', typeLabel: 'Excel workbook' },
   { key: 'freqLp', label: 'Freq_LP', fileName: 'Freq_LP.xlsx', accept: '.xlsx,.xls', typeLabel: 'Excel workbook' },
-  { key: 'orderSummary', label: 'Order Summary', fileName: 'Order Summary.txt', accept: '.txt', typeLabel: 'TXT source file' },
+  // Order Summary may be exported as several files that get concatenated on the backend (same
+  // header, data rows combined) - see wisa-capacity-backend/.../orderSummary.service.js.
+  { key: 'orderSummary', label: 'Order Summary', fileName: 'Order Summary.txt', accept: '.txt', typeLabel: 'TXT source file', multiple: true },
   { key: 'setPart', label: 'SetPart', fileName: 'SetPart.txt', accept: '.txt', typeLabel: 'TXT source file' },
 ];
 export const PRIMARY_ACTION_KEYS = ['validation', 'preview', 'calBase', 'routeAudit', 'minmax'];
-export const INITIAL_FILES = REQUIRED_FILES.reduce((files, item) => ({ ...files, [item.key]: null }), {});
+export const INITIAL_FILES = REQUIRED_FILES.reduce((files, item) => ({ ...files, [item.key]: item.multiple ? [] : null }), {});
+export const isFileFieldSelected = (item, value) => (item.multiple ? Array.isArray(value) && value.length > 0 : Boolean(value));

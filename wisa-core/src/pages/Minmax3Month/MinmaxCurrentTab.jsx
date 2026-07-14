@@ -4,7 +4,7 @@ import MinmaxConfigPanel from './components/MinmaxConfigPanel.jsx';
 import MinmaxResultsPanel from './components/MinmaxResultsPanel.jsx';
 import MinmaxSectionCard from './components/MinmaxSectionCard.jsx';
 import MinmaxUploadGrid from './components/MinmaxUploadGrid.jsx';
-import { REQUIRED_FILES, historyDownloadUrl } from './constants/minmaxConstants.js';
+import { REQUIRED_FILES, historyDownloadUrl, isFileFieldSelected } from './constants/minmaxConstants.js';
 import { useMinmaxActions } from './hooks/useMinmaxActions.js';
 import { useMinmaxFiles } from './hooks/useMinmaxFiles.js';
 
@@ -94,7 +94,7 @@ function buildFileErrors(results) {
 export default function MinmaxCurrentTab({ onCalculateSuccess }) {
   const { files, config, handleFileChange, handleConfigChange } = useMinmaxFiles();
   const { actions, results, loading, anyLoading } = useMinmaxActions(files, config);
-  const selectedCount = Object.values(files).filter(Boolean).length;
+  const selectedCount = REQUIRED_FILES.filter((item) => isFileFieldSelected(item, files[item.key])).length;
   const selectedFileLabel = `${selectedCount}/${REQUIRED_FILES.length} selected`;
   const minmaxAction = actions.find((action) => action.key === 'minmax');
   const fileErrors = buildFileErrors(results);
