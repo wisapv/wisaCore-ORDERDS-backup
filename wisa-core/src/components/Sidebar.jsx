@@ -1,13 +1,19 @@
-import { LayoutGrid, Wallet, BarChart3, Box, User, LogOut, Cat, ChevronDown } from 'lucide-react';
+import { LayoutGrid, Wallet, BarChart3, Box, User, LogOut, ChevronDown } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
-
+import wisaCoreLogo from '../assets/wisacore-logo.png';
 export default function Sidebar() {
   return (
     <aside className="w-64 bg-wisa-dark h-full flex flex-col py-8 rounded-3xl shadow-2xl overflow-hidden flex-shrink-0">
 
       <div className="flex items-center gap-3 px-8 mb-12 cursor-pointer">
-        <Cat className="text-wisa-pink" size={32} strokeWidth={2.5} />
-        <span className="text-white font-bold text-2xl tracking-wide">wisaCore</span>
+        <img
+          src={wisaCoreLogo}
+          alt="wisaCore logo"
+          className="h-10 w-10 shrink-0 object-contain"
+        />
+        <span className="text-2xl font-bold text-white">
+          wisaCore
+        </span>
       </div>
 
       <nav className="flex flex-col gap-1 w-full flex-1">

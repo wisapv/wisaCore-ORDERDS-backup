@@ -78,7 +78,20 @@ export default function CapacityPage() {
   const tableHeaders = [...baseCols, ...availableMonths, 'Multiaddr'];
 
   return (
-    <div className="flex flex-col h-full gap-6">
+        <div
+      className="
+        flex
+        h-full
+        min-h-0
+        flex-col
+        gap-6
+        overflow-y-auto
+        rounded-[40px]
+        p-6
+        custom-scrollbar
+      "
+      style={{ background: 'var(--minmax-gradient)' }}
+    >
       <Header title="Capacity Flowrack" />
 
       {/* Top Section */}

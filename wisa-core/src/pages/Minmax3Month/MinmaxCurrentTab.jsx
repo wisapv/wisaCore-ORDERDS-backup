@@ -109,7 +109,7 @@ export default function MinmaxCurrentTab({ onCalculateSuccess }) {
         eyebrow="Setup"
         title="Upload & Configure"
         description="Upload the six required source files and set the calculation config, then run the full Min-Max calculation in one step."
-        variant="strong"
+        variant="soft"
       >
         <div className="flex flex-col gap-6">
           <div className="flex w-fit items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">

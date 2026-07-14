@@ -21,12 +21,33 @@
   --shadow-strong: 0 28px 70px rgba(92, 43, 62, 0.18);
   --shadow-soft: 0 18px 42px rgba(92, 43, 62, 0.10);
 
-  /* gradient พื้นหลังเต็มหน้า ใช้กับ page wrapper (MainLayout) ทุกหน้าทั่วแอป */
+  /* gradient ฟุ้งแบบ reference ใช้เฉพาะหน้า Overview */
   --page-gradient:
-    radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.90), transparent 26%),
-    radial-gradient(circle at 80% 28%, rgba(255, 176, 199, 0.75), transparent 30%),
-    linear-gradient(135deg, #f6d7df 0%, #efb9c8 45%, #e69cb5 100%);
-}
+    radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.50) 26%, transparent 48%),
+    radial-gradient(circle at 80% 24%, rgba(253, 217, 227, 0.58) 0%, rgba(255, 176, 199, 0.15) 28%, transparent 56%),
+    linear-gradient(135deg, #f8e3e8 0%, #f2cbd6 48%, #f0d4dd 100%);
+
+  --minmax-gradient:
+    radial-gradient(
+      circle at 18% 20%,
+      rgba(255, 255, 255, 0.96) 0%,
+      rgba(255, 255, 255, 0.55) 30%,
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 82% 22%,
+      rgba(255, 208, 221, 0.42) 0%,
+      rgba(255, 208, 221, 0.16) 32%,
+      transparent 58%
+    ),
+    linear-gradient(
+      135deg,
+      #fff9fa 0%,
+      #fcedf1 52%,
+      #f8dfe7 100%
+    );
+
+  }
 
 * { box-sizing: border-box; }
 body { margin: 0; font-family: 'Manrope', sans-serif; }
@@ -73,25 +94,11 @@ body { margin: 0; font-family: 'Manrope', sans-serif; }
   box-shadow: 0 16px 30px rgba(36, 31, 33, 0.24);
 }
 
-/* วงฟุ้งตกแต่งระดับหน้า (ไม่ใช่ระดับการ์ด) — scope อยู่ในหน้าเดียว (Overview) ไม่ใช่ทั้ง
-   viewport อีกต่อไป จึงใช้ position: absolute (ต้องอยู่ใน element ที่มี position: relative +
-   overflow: hidden กัน blob ล้นออกนอกกรอบ) */
-.page-decoration::before,
-.page-decoration::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  border-radius: 50%;
-  filter: blur(8px);
-  pointer-events: none;
-}
-.page-decoration::before {
-  width: 390px; height: 390px; top: -120px; left: -80px;
-  background: rgba(255, 255, 255, 0.34);
-}
-.page-decoration::after {
-  width: 470px; height: 470px; right: -140px; bottom: -150px;
-  background: rgba(246, 112, 154, 0.28);
+/* Overview ใช้ layered radial-gradient ใน --page-gradient โดยตรง
+   จึงไม่สร้างวงกลม pseudo-element แยก เพื่อไม่ให้เห็นเป็นก้อนชมพูแข็ง */
+.overview-surface {
+  position: relative;
+  isolation: isolate;
 }
 
 /* เพิ่มต่อท้ายใน index.css */
@@ -108,4 +115,369 @@ body { margin: 0; font-family: 'Manrope', sans-serif; }
 }
 .custom-scrollbar:hover::-webkit-scrollbar-thumb {
   background-color: #e5e7eb;
+}
+/* Dashboard calendar */
+.today-card {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  width: 290px;
+  flex-shrink: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 28px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 32px;
+}
+
+.today-card-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 4px;
+}
+
+.activity-calendar {
+  margin-top: 26px;
+  color: var(--text-primary);
+}
+
+.calendar-header {
+  display: grid;
+  grid-template-columns: 30px 1fr 30px;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+
+.calendar-header p {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.calendar-header button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.48);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.calendar-header button:hover {
+  background: rgba(255, 255, 255, 0.86);
+  transform: translateY(-1px);
+}
+
+.calendar-weekdays,
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.calendar-weekdays {
+  margin-bottom: 7px;
+}
+
+.calendar-weekdays span {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.calendar-day,
+.calendar-empty {
+  aspect-ratio: 1;
+  min-width: 0;
+}
+
+.calendar-day {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.calendar-day:hover {
+  background: rgba(255, 255, 255, 0.65);
+  transform: scale(1.04);
+}
+
+.calendar-day.has-activity {
+  border-color: #ee9eb8;
+  box-shadow: 0 0 0 2px rgba(238, 158, 184, 0.12);
+}
+
+.calendar-day.is-today:not(.is-selected) {
+  background: rgba(36, 31, 33, 0.08);
+  font-weight: 800;
+}
+
+.calendar-day.is-selected {
+  border-color: #ee9eb8;
+  background: #ee9eb8;
+  color: white;
+  box-shadow: 0 7px 14px rgba(238, 158, 184, 0.30);
+}
+
+.calendar-divider {
+  height: 1px;
+  margin: 17px 0 13px;
+  background: rgba(92, 43, 62, 0.12);
+}
+
+.selected-date-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.selected-date-label {
+  color: var(--text-muted);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.selected-date-value {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.calendar-add-button {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  gap: 4px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-wisa-dark);
+  color: white;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.selected-activities {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 11px;
+}
+
+.activity-empty {
+  width: 100%;
+  padding: 10px;
+  border: 1px dashed rgba(92, 43, 62, 0.18);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.33);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 9px;
+  text-align: left;
+}
+
+.activity-item-compact {
+  display: grid;
+  grid-template-columns: 7px minmax(0, 1fr) 22px;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.46);
+}
+
+.activity-item-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ee9eb8;
+  box-shadow: 0 0 0 3px rgba(238, 158, 184, 0.14);
+}
+
+.activity-item-copy {
+  min-width: 0;
+}
+
+.activity-item-copy p {
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 10px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-item-copy span {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 8px;
+}
+
+.activity-item-compact > button {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #a09399;
+  cursor: pointer;
+}
+
+.activity-item-compact > button:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #dc2626;
+}
+
+/* Add activity popup */
+.activity-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(40, 27, 33, 0.24);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.activity-modal-card {
+  position: relative;
+  width: min(420px, 100%);
+  padding: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.70);
+  border-radius: 32px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.90), rgba(255, 227, 235, 0.82));
+  box-shadow: 0 34px 90px rgba(92, 43, 62, 0.28);
+}
+
+.activity-modal-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.68);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.activity-modal-eyebrow {
+  color: #c96f8e;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.activity-modal-title {
+  max-width: 310px;
+  margin: 7px 0 24px;
+  color: var(--text-primary);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+
+.activity-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.activity-form-field > span {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.activity-form-field input,
+.activity-form-field select {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid rgba(92, 43, 62, 0.12);
+  border-radius: 15px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+}
+
+.activity-form-field input:focus,
+.activity-form-field select:focus {
+  border-color: #ee9eb8;
+  box-shadow: 0 0 0 4px rgba(238, 158, 184, 0.14);
+}
+
+.activity-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.activity-save-button {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.activity-save-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  transform: none;
+}
+
+/* Min-Max Current and History use the same full-page dashboard background. */
+.minmax-surface {
+  background: var(--minmax-gradient);
+}
+
+@media (max-width: 1050px) {
+  .overview-surface {
+    grid-template-columns: 270px minmax(0, 1fr);
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .today-card {
+    width: 270px;
+    padding: 26px;
+  }
 }
