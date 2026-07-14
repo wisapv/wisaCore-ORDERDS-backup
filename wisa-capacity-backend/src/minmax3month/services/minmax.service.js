@@ -9,6 +9,11 @@ import { DISPLAY_DASH, DISPLAY_ERROR, DISPLAY_NO_DATA, ROUTE1_LS_MAX_FIXED_FREQ,
 const REQUIRED_FILES = ['addressMaster', 'partMaster', 'nqc', 'freqLp', 'orderSummary', 'setPart'];
 
 const pickFile = (files, key) => Array.isArray(files?.[key]) ? files[key][0] : files?.[key];
+const pickFileList = (files, key) => {
+  const value = files?.[key];
+  if (Array.isArray(value)) return value;
+  return value ? [value] : [];
+};
 const partNoClean = (partNo) => String(partNo ?? '').replace(/-/g, '').trim();
 const removeSpaces = (value) => String(value ?? '').replace(/\s+/g, '');
 const normalizeDocks = (targetDocks) => {
@@ -72,7 +77,7 @@ export const processCalBase = ({ files, targetMonth, workingDayN1, workingDayN2,
     nqc: { file: pickFile(files, 'nqc'), targetMonth, workingDayN1: n1Days, workingDayN2: n2Days, workingDayN3: n3Days },
     partMaster: { file: pickFile(files, 'partMaster'), targetMonth, targetDocks: docks },
     freqLp: { file: pickFile(files, 'freqLp'), targetDocks: docks },
-    orderSummary: { file: pickFile(files, 'orderSummary') },
+    orderSummary: { files: pickFileList(files, 'orderSummary') },
     setPart: { file: pickFile(files, 'setPart'), asOfDate },
   };
 

@@ -54,7 +54,7 @@ export const previewUpload = (req, res) => {
       partMaster: parsePartMaster(req.files.partMaster[0]),
       nqc: parseNqcMinmax(req.files.nqc[0]),
       freqLp: parseFreqLp(req.files.freqLp[0]),
-      orderSummary: parseOrderSummary(req.files.orderSummary[0]),
+      orderSummary: parseOrderSummary(req.files.orderSummary),
       setPart: parseSetPart(req.files.setPart[0]),
     };
     const warnings = [];
@@ -295,7 +295,7 @@ export const processFreqLpUpload = (req, res) => {
 
 
 export const processOrderSummaryUpload = (req, res) => {
-  if (!req.file) {
+  if (!req.files?.length) {
     return res.status(400).json({
       success: false,
       message: 'Order Summary / BoxLayer processing failed',
@@ -304,7 +304,7 @@ export const processOrderSummaryUpload = (req, res) => {
   }
 
   try {
-    const result = processOrderSummary({ file: req.file });
+    const result = processOrderSummary({ files: req.files });
 
     if (result.errors?.length) {
       return res.status(400).json({

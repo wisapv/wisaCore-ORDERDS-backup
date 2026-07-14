@@ -5,7 +5,9 @@ import { REQUIRED_FILE_FIELDS } from './validators/minmax.validator.js';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
-const uploadFields = REQUIRED_FILE_FIELDS.map((name) => ({ name, maxCount: 1 }));
+// orderSummary may be exported as multiple files that get concatenated (header from the first
+// file only, data rows from all of them) - see orderSummary.service.js#processOrderSummary.
+const uploadFields = REQUIRED_FILE_FIELDS.map((name) => ({ name, maxCount: name === 'orderSummary' ? 30 : 1 }));
 const uploadValidationFiles = (req, res, next) => {
   upload.fields(uploadFields)(req, res, (error) => {
     if (error) {
@@ -82,7 +84,7 @@ const uploadFreqLpFile = (req, res, next) => {
 
 
 const uploadOrderSummaryFile = (req, res, next) => {
-  upload.single('orderSummary')(req, res, (error) => {
+  upload.array('orderSummary', 30)(req, res, (error) => {
     if (error) {
       return res.status(400).json({
         success: false,
