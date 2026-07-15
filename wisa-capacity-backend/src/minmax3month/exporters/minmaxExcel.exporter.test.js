@@ -1,8 +1,32 @@
 import assert from 'node:assert/strict';
 import xlsx from 'xlsx';
 import ExcelJS from 'exceljs';
+import { pool } from '../../db/pool.js';
+import { initSchema } from '../../db/initSchema.js';
 import { processCalBase, calculateMinMaxFromCalBase } from '../services/minmax.service.js';
+import { upsertYear } from '../services/workingDaySettings.service.js';
 import { buildMinMaxExcelWorkbook, exportMinMaxToBuffer } from './minmaxExcel.exporter.js';
+
+// processCalBase now resolves N+1/N+2/N+3 working days from working_day_settings (PostgreSQL)
+// instead of taking them as parameters, so this is now an integration test - see
+// minmaxHistory.service.test.js for the skip-if-unreachable rationale.
+try {
+  await pool.query('SELECT 1');
+} catch (error) {
+  console.warn('Skipping minmaxExcel.exporter.test.js: could not connect to PostgreSQL.');
+  console.warn(`Install PostgreSQL and set DATABASE_URL (see .env.example) to run this test. (${error.message})`);
+  await pool.end();
+  process.exit(0);
+}
+
+await initSchema();
+
+// targetMonth='2025-10' -> N+1=2025-11, N+2=2025-12, N+3=2026-01, matching the workingDayN1=20/
+// N2=21/N3=22 values this test used to pass directly.
+const cleanupWorkingDays = () => pool.query('DELETE FROM working_day_settings WHERE (year = 2025 AND month IN (11, 12)) OR (year = 2026 AND month = 1)');
+await cleanupWorkingDays();
+await upsertYear(2025, { 11: 20, 12: 21 });
+await upsertYear(2026, { 1: 22 });
 
 // Fixture helpers copied from calBase.vba-parity.test.js (same "happy" case) so this test
 // exercises the exporter against a real calculateMinMaxFromCalBase row shape, not a hand-rolled one.
@@ -39,13 +63,10 @@ const makeFiles = () => ({
   setPart: makeTextFile(setHeaders, [makeSetRow()]),
 });
 
-const runMinMax = ({ targetMonth = '2025-10', unitPerDay = 579, tackTime = 95 } = {}) => {
-  const calBaseResult = processCalBase({
+const runMinMax = async ({ targetMonth = '2025-10', unitPerDay = 579, tackTime = 95 } = {}) => {
+  const calBaseResult = await processCalBase({
     files: makeFiles(),
     targetMonth,
-    workingDayN1: 20,
-    workingDayN2: 21,
-    workingDayN3: 22,
     targetDocks: ['S1', 'S4', 'SH'],
     asOfDate: '20251017',
     unitPerDay,
@@ -62,9 +83,10 @@ const readBack = async (params) => {
   return workbook.getWorksheet('Min-Max 3 Month');
 };
 
+try {
 // --- Section 6.1/6.2: happy-case fixture, merges, style spot-checks, formula strings ---
 
-const happyResult = runMinMax();
+const happyResult = await runMinMax();
 assert.equal(happyResult.rows.length, 1);
 assert.equal(happyResult.rows[0].FormulaStatus, 'OK');
 
@@ -222,3 +244,7 @@ assert.ok(workbook instanceof ExcelJS.Workbook);
 assert.ok(workbook.getWorksheet('Min-Max 3 Month'));
 
 console.log('minmaxExcel exporter VBA parity test passed');
+} finally {
+  await cleanupWorkingDays();
+  await pool.end();
+}

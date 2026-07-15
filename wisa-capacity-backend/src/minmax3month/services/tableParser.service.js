@@ -73,6 +73,15 @@ export const getValueByHeader = (row, columns, uniqueColumns, headerName, occurr
   return row[uniqueColumns[columnIndex]] ?? '';
 };
 
+export const parseHeaderColumns = (buffer) => {
+  const text = buffer.toString('utf8');
+  const lines = splitRows(text);
+  if (!lines.length) return [];
+
+  const delimiter = detectDelimiter(lines[0]);
+  return parseDelimitedLine(lines[0], delimiter);
+};
+
 export const parseCsvBufferWithRows = (buffer, requiredColumns = []) => {
   const text = buffer.toString('utf8');
   const lines = splitRows(text);

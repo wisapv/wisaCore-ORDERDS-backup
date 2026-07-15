@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { AUDIT_ROUTE_CODE_URL, CALCULATE_MINMAX_URL, PREVIEW_UPLOAD_URL, PROCESS_ADDRESS_MASTER_URL, PROCESS_CAL_BASE_URL, PROCESS_FREQ_LP_URL, PROCESS_NQC_URL, PROCESS_ORDER_SUMMARY_URL, PROCESS_PART_MASTER_URL, PROCESS_SET_PART_URL, TARGET_DOCKS, VALIDATE_UPLOAD_URL } from '../constants/minmaxConstants.js';
+import { AUDIT_ROUTE_CODE_URL, CALCULATE_MINMAX_URL, PREVIEW_UPLOAD_URL, PROCESS_ADDRESS_MASTER_URL, PROCESS_CAL_BASE_URL, PROCESS_FREQ_LP_URL, PROCESS_NQC_URL, PROCESS_ORDER_SUMMARY_URL, PROCESS_PART_MASTER_URL, PROCESS_SET_PART_URL, REQUIRED_FILES, TARGET_DOCKS, VALIDATE_UPLOAD_URL } from '../constants/minmaxConstants.js';
 import { buildMinmaxFormData } from '../utils/buildMinmaxFormData.js';
 
 const connectionError = { success: false, message: 'Unable to connect to backend at localhost:3000.', errors: ['Please start the backend server and try again.'] };
 
-export function useMinmaxActions(files, config) {
+export function useMinmaxActions(files, config, targetDocks = TARGET_DOCKS) {
   const [results, setResults] = useState({});
   const [loading, setLoading] = useState({});
   const anyLoading = Object.values(loading).some(Boolean);
@@ -20,15 +20,17 @@ export function useMinmaxActions(files, config) {
     }
     setLoading((current) => ({ ...current, [key]: false }));
   };
-  const fullForm = () => buildMinmaxFormData(files, config);
+  const fullForm = () => buildMinmaxFormData(files, config, targetDocks);
   const singleFile = (fileKey) => {
     const formData = new FormData();
-    if (files[fileKey]) formData.append(fileKey, files[fileKey]);
+    const fieldDef = REQUIRED_FILES.find((item) => item.key === fileKey);
+    if (fieldDef?.multiple) {
+      (files[fileKey] || []).forEach((file) => formData.append(fileKey, file));
+    } else if (files[fileKey]) {
+      formData.append(fileKey, files[fileKey]);
+    }
     formData.append('targetMonth', config.targetMonth);
-    formData.append('workingDayN1', config.workingDayN1);
-    formData.append('workingDayN2', config.workingDayN2);
-    formData.append('workingDayN3', config.workingDayN3);
-    formData.append('targetDocks', TARGET_DOCKS.join(','));
+    formData.append('targetDocks', targetDocks.join(','));
     return formData;
   };
   const actions = [

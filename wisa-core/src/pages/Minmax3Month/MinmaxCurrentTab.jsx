@@ -4,13 +4,14 @@ import MinmaxConfigPanel from './components/MinmaxConfigPanel.jsx';
 import MinmaxResultsPanel from './components/MinmaxResultsPanel.jsx';
 import MinmaxSectionCard from './components/MinmaxSectionCard.jsx';
 import MinmaxUploadGrid from './components/MinmaxUploadGrid.jsx';
-import { REQUIRED_FILES, historyDownloadUrl } from './constants/minmaxConstants.js';
+import { REQUIRED_FILES, historyDownloadUrl, isFileFieldSelected } from './constants/minmaxConstants.js';
 import { useMinmaxActions } from './hooks/useMinmaxActions.js';
 import { useMinmaxFiles } from './hooks/useMinmaxFiles.js';
+import { useWorkingDayPreview } from './hooks/useWorkingDayPreview.js';
 
 const CALCULATING_PROGRESS_LABELS = ['กำลังอ่านไฟล์...', 'กำลังจับคู่ข้อมูล...', 'กำลังคำนวณสูตร Min-Max...'];
 
-function CalculateButton({ action, isLoading, disabled }) {
+function CalculateButton({ action, isLoading, disabled, disabledReason }) {
   const [progressIndex, setProgressIndex] = useState(0);
 
   useEffect(() => {
@@ -31,24 +32,30 @@ function CalculateButton({ action, isLoading, disabled }) {
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={disabled}
-      className="btn-dark w-full py-5 text-base font-bold tracking-widest uppercase disabled:opacity-50 disabled:hover:shadow-none flex items-center justify-center gap-3"
-    >
-      {isLoading ? (
-        <span className="flex items-center justify-center gap-2">
-          <LoaderCircle className="animate-spin" size={20} />
-          {CALCULATING_PROGRESS_LABELS[progressIndex]}
-        </span>
-      ) : (
-        <span className="flex items-center justify-center gap-2">
-          <Play size={20} fill="currentColor" />
-          Calculate Min-Max
-        </span>
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={disabled}
+        title={disabled && disabledReason ? disabledReason : undefined}
+        className="btn-dark w-full py-5 text-base font-bold tracking-widest uppercase disabled:opacity-50 disabled:hover:shadow-none flex items-center justify-center gap-3"
+      >
+        {isLoading ? (
+          <span className="flex items-center justify-center gap-2">
+            <LoaderCircle className="animate-spin" size={20} />
+            {CALCULATING_PROGRESS_LABELS[progressIndex]}
+          </span>
+        ) : (
+          <span className="flex items-center justify-center gap-2">
+            <Play size={20} fill="currentColor" />
+            Calculate Min-Max
+          </span>
+        )}
+      </button>
+      {disabled && disabledReason && !isLoading && (
+        <p className="text-center text-xs font-semibold text-red-600">{disabledReason}</p>
       )}
-    </button>
+    </div>
   );
 }
 
@@ -91,13 +98,22 @@ function buildFileErrors(results) {
   }, {});
 }
 
-export default function MinmaxCurrentTab({ onCalculateSuccess }) {
-  const { files, config, handleFileChange, handleConfigChange } = useMinmaxFiles();
-  const { actions, results, loading, anyLoading } = useMinmaxActions(files, config);
-  const selectedCount = Object.values(files).filter(Boolean).length;
+export default function MinmaxCurrentTab({ onCalculateSuccess, onGoToSettings }) {
+  const { files, config, targetDocks, handleFileChange, handleConfigChange, toggleTargetDock } = useMinmaxFiles();
+  const { actions, results, loading, anyLoading } = useMinmaxActions(files, config, targetDocks);
+  const workingDayPreview = useWorkingDayPreview(config.targetMonth);
+  const selectedCount = REQUIRED_FILES.filter((item) => isFileFieldSelected(item, files[item.key])).length;
   const selectedFileLabel = `${selectedCount}/${REQUIRED_FILES.length} selected`;
   const minmaxAction = actions.find((action) => action.key === 'minmax');
   const fileErrors = buildFileErrors(results);
+
+  // Catch a missing N+1/N+2/N+3 working-day setting here, before the user hits Calculate and
+  // gets the same error back from the backend after already waiting on the request.
+  const missingWorkingDays = workingDayPreview.isReady && !workingDayPreview.allSet;
+  const calculateDisabled = anyLoading || missingWorkingDays;
+  const calculateDisabledReason = missingWorkingDays
+    ? 'Missing working day settings for N+1/N+2/N+3 - set them in the Settings tab before calculating.'
+    : null;
 
   useEffect(() => {
     if (results.minmax?.success) onCalculateSuccess?.();
@@ -117,11 +133,18 @@ export default function MinmaxCurrentTab({ onCalculateSuccess }) {
             <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Required files</span>
           </div>
           <MinmaxUploadGrid files={files} onFileChange={handleFileChange} fileErrors={fileErrors} />
-          <MinmaxConfigPanel config={config} onConfigChange={handleConfigChange} />
+          <MinmaxConfigPanel
+            config={config}
+            onConfigChange={handleConfigChange}
+            targetDocks={targetDocks}
+            onToggleTargetDock={toggleTargetDock}
+            workingDayPreview={workingDayPreview}
+            onGoToSettings={onGoToSettings}
+          />
         </div>
       </MinmaxSectionCard>
 
-      <CalculateButton action={minmaxAction} isLoading={loading.minmax} disabled={anyLoading} />
+      <CalculateButton action={minmaxAction} isLoading={loading.minmax} disabled={calculateDisabled} disabledReason={calculateDisabledReason} />
 
       <MinmaxResultsPanel result={results.minmax} targetMonth={config.targetMonth} />
 

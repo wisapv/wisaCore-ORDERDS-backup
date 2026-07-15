@@ -17,6 +17,7 @@
     "test:route-audit": "node src/minmax3month/services/routeAudit.vba-parity.test.js",
     "test:excel-export": "node src/minmax3month/exporters/minmaxExcel.exporter.test.js",
     "test:minmax-history": "node src/minmax3month/services/minmaxHistory.service.test.js",
+    "test:working-day-settings": "node src/minmax3month/services/workingDaySettings.service.test.js",
     "predev": "node scripts/ensure-dependencies.js",
     "prestart": "node scripts/ensure-dependencies.js"
   },
