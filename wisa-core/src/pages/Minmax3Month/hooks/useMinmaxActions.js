@@ -4,7 +4,7 @@ import { buildMinmaxFormData } from '../utils/buildMinmaxFormData.js';
 
 const connectionError = { success: false, message: 'Unable to connect to backend at localhost:3000.', errors: ['Please start the backend server and try again.'] };
 
-export function useMinmaxActions(files, config) {
+export function useMinmaxActions(files, config, targetDocks = TARGET_DOCKS) {
   const [results, setResults] = useState({});
   const [loading, setLoading] = useState({});
   const anyLoading = Object.values(loading).some(Boolean);
@@ -20,7 +20,7 @@ export function useMinmaxActions(files, config) {
     }
     setLoading((current) => ({ ...current, [key]: false }));
   };
-  const fullForm = () => buildMinmaxFormData(files, config);
+  const fullForm = () => buildMinmaxFormData(files, config, targetDocks);
   const singleFile = (fileKey) => {
     const formData = new FormData();
     const fieldDef = REQUIRED_FILES.find((item) => item.key === fileKey);
@@ -30,7 +30,7 @@ export function useMinmaxActions(files, config) {
       formData.append(fileKey, files[fileKey]);
     }
     formData.append('targetMonth', config.targetMonth);
-    formData.append('targetDocks', TARGET_DOCKS.join(','));
+    formData.append('targetDocks', targetDocks.join(','));
     return formData;
   };
   const actions = [

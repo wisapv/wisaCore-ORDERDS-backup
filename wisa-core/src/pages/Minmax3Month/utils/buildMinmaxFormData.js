@@ -1,6 +1,6 @@
 import { REQUIRED_FILES, TARGET_DOCKS } from '../constants/minmaxConstants.js';
 
-export const buildMinmaxFormData = (files, config) => {
+export const buildMinmaxFormData = (files, config, targetDocks = TARGET_DOCKS) => {
   const formData = new FormData();
   REQUIRED_FILES.forEach(({ key, multiple }) => {
     if (multiple) {
@@ -12,6 +12,6 @@ export const buildMinmaxFormData = (files, config) => {
   formData.append('targetMonth', config.targetMonth);
   formData.append('unitPerDay', config.unitPerDay);
   formData.append('tackTime', config.tackTime);
-  formData.append('targetDocks', TARGET_DOCKS.join(','));
+  formData.append('targetDocks', targetDocks.join(','));
   return formData;
 };

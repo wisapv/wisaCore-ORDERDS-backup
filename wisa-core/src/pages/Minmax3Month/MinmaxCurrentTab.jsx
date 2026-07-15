@@ -99,8 +99,8 @@ function buildFileErrors(results) {
 }
 
 export default function MinmaxCurrentTab({ onCalculateSuccess, onGoToSettings }) {
-  const { files, config, handleFileChange, handleConfigChange } = useMinmaxFiles();
-  const { actions, results, loading, anyLoading } = useMinmaxActions(files, config);
+  const { files, config, targetDocks, handleFileChange, handleConfigChange, toggleTargetDock } = useMinmaxFiles();
+  const { actions, results, loading, anyLoading } = useMinmaxActions(files, config, targetDocks);
   const workingDayPreview = useWorkingDayPreview(config.targetMonth);
   const selectedCount = REQUIRED_FILES.filter((item) => isFileFieldSelected(item, files[item.key])).length;
   const selectedFileLabel = `${selectedCount}/${REQUIRED_FILES.length} selected`;
@@ -136,6 +136,8 @@ export default function MinmaxCurrentTab({ onCalculateSuccess, onGoToSettings })
           <MinmaxConfigPanel
             config={config}
             onConfigChange={handleConfigChange}
+            targetDocks={targetDocks}
+            onToggleTargetDock={toggleTargetDock}
             workingDayPreview={workingDayPreview}
             onGoToSettings={onGoToSettings}
           />

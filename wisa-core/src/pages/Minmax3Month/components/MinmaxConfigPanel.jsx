@@ -1,12 +1,15 @@
 import { LoaderCircle } from 'lucide-react';
 import { TARGET_DOCKS } from '../constants/minmaxConstants.js';
 
-function ConfigInput({ label, value, onChange, placeholder = '', type = 'text', helper, variant = 'light' }) {
+function ConfigInput({ label, value, onChange, placeholder = '', type = 'text', helper, variant = 'light', highlight = false }) {
   const dark = variant === 'dark';
+  const inputClass = highlight
+    ? 'bg-wisa-pink/5 border-2 border-wisa-pink text-slate-950 placeholder:text-slate-300 focus:border-wisa-pink focus:ring-2 focus:ring-wisa-pink/20'
+    : (dark ? 'bg-black/50 border-white/5 text-white placeholder:text-white/20 focus:border-wisa-pink/50' : 'bg-white border-slate-200 text-slate-950 placeholder:text-slate-300 focus:border-wisa-pink focus:ring-wisa-pink/15');
   return (
     <label className="flex flex-col gap-2">
-      <span className={`${dark ? 'text-white/40' : 'text-slate-500'} text-[10px] font-bold uppercase tracking-[0.2em]`}>{label}</span>
-      <input type={type} min={type === 'number' ? '1' : undefined} step={type === 'number' ? '1' : undefined} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className={`${dark ? 'bg-black/50 border-white/5 text-white placeholder:text-white/20 focus:border-wisa-pink/50' : 'bg-white border-slate-200 text-slate-950 placeholder:text-slate-300 focus:border-wisa-pink focus:ring-wisa-pink/15'} h-12 rounded-2xl border px-4 text-sm font-semibold outline-none transition focus:ring-4`} />
+      <span className={`${dark ? 'text-white/40' : 'text-wisa-dark'} text-[10px] font-bold uppercase tracking-[0.2em]`}>{label}</span>
+      <input type={type} min={type === 'number' ? '1' : undefined} step={type === 'number' ? '1' : undefined} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className={`${inputClass} h-12 rounded-2xl border px-4 text-sm font-semibold outline-none transition ${highlight ? '' : 'focus:ring-4'}`} />
       {helper && <span className={`${dark ? 'text-white/35' : 'text-slate-500'} text-xs`}>{helper}</span>}
     </label>
   );
@@ -43,7 +46,7 @@ function WorkingDayPreview({ preview, onGoToSettings, variant = 'light' }) {
 
   return (
     <div className={boxClass}>
-      <span className={`${dark ? 'text-white/40' : 'text-slate-500'} text-[10px] font-bold uppercase tracking-[0.2em]`}>Working days (from Settings)</span>
+      <span className={`${dark ? 'text-white/40' : 'text-wisa-dark'} text-[10px] font-bold uppercase tracking-[0.2em]`}>Working days (from Settings)</span>
       <div className="mt-3 flex flex-col gap-2">
         {preview.entries.map((entry) => {
           const missing = entry.value === null || entry.value === undefined;
@@ -76,21 +79,38 @@ function WorkingDayPreview({ preview, onGoToSettings, variant = 'light' }) {
   );
 }
 
-export default function MinmaxConfigPanel({ config, onConfigChange, variant = 'light', showDocks = true, workingDayPreview, onGoToSettings }) {
+export default function MinmaxConfigPanel({ config, onConfigChange, variant = 'light', showDocks = true, workingDayPreview, onGoToSettings, targetDocks = TARGET_DOCKS, onToggleTargetDock }) {
   const dark = variant === 'dark';
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <ConfigInput variant={variant} label="Target Month" placeholder="May-26 or 2026-05" helper="Example: May-26 or 2026-05" value={config.targetMonth} onChange={(value) => onConfigChange('targetMonth', value)} />
+        <ConfigInput variant={variant} highlight label="Target Month" placeholder="May-26 or 2026-05" helper="Example: May-26 or 2026-05" value={config.targetMonth} onChange={(value) => onConfigChange('targetMonth', value)} />
         <ConfigInput variant={variant} label="Unit/Day" type="number" placeholder="579" value={config.unitPerDay} onChange={(value) => onConfigChange('unitPerDay', value)} />
         <ConfigInput variant={variant} label="Tack time (sec)" type="number" placeholder="95" value={config.tackTime} onChange={(value) => onConfigChange('tackTime', value)} />
       </div>
 
       <WorkingDayPreview preview={workingDayPreview} onGoToSettings={onGoToSettings} variant={variant} />
 
-      {showDocks && <div className={`${dark ? 'border-white/5 bg-black/30 text-white/50' : 'border-slate-200 bg-slate-50 text-slate-600'} flex flex-wrap items-center gap-2 rounded-2xl border p-3 text-xs`}>
-        <span className="font-bold uppercase tracking-[0.16em]">Target docks</span>
-        {TARGET_DOCKS.map((dock) => <span key={dock} className={`${dark ? 'border-wisa-pink/30 bg-wisa-pink/10' : 'border-wisa-pink/20 bg-white'} rounded-full border px-3 py-1 font-bold text-wisa-pink`}>{dock}</span>)}
+      {showDocks && <div className={`${dark ? 'border-white/5 bg-black/30' : 'border-slate-200 bg-slate-50'} flex flex-wrap items-center gap-2 rounded-2xl border p-3 text-xs`}>
+        <span className={`${dark ? 'text-white/50' : 'text-wisa-dark'} font-bold uppercase tracking-[0.16em]`}>Target docks</span>
+        {TARGET_DOCKS.map((dock) => {
+          const selected = targetDocks.includes(dock);
+          return (
+            <button
+              key={dock}
+              type="button"
+              onClick={() => onToggleTargetDock?.(dock)}
+              aria-pressed={selected}
+              className={`rounded-full border px-3 py-1 font-bold transition-colors ${
+                selected
+                  ? 'border-wisa-pink bg-wisa-pink text-white'
+                  : (dark ? 'border-white/10 bg-white/5 text-white/40 hover:text-white/60' : 'border-slate-200 bg-white/60 text-slate-400 hover:text-slate-600')
+              }`}
+            >
+              {dock}
+            </button>
+          );
+        })}
       </div>}
     </div>
   );

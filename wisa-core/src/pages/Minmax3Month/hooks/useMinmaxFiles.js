@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { INITIAL_FILES, REQUIRED_FILES } from '../constants/minmaxConstants.js';
+import { INITIAL_FILES, REQUIRED_FILES, TARGET_DOCKS } from '../constants/minmaxConstants.js';
 
 const FILE_FIELDS_BY_KEY = REQUIRED_FILES.reduce((map, item) => ({ ...map, [item.key]: item }), {});
 
 export function useMinmaxFiles() {
   const [files, setFiles] = useState(INITIAL_FILES);
   const [config, setConfig] = useState({ targetMonth: '', unitPerDay: '', tackTime: '' });
+  // Selected docks default to every dock in TARGET_DOCKS (the full list of choices) - user
+  // toggles individual docks off/on from there, but at least one must always stay selected.
+  const [targetDocks, setTargetDocks] = useState(TARGET_DOCKS);
   // `selected` is a single File for regular fields, or a FileList/array for fields marked
   // multiple: true (currently just orderSummary) - normalize both shapes to what each field expects.
   const handleFileChange = (key, selected) => {
@@ -13,5 +16,12 @@ export function useMinmaxFiles() {
     setFiles((current) => ({ ...current, [key]: isMultiple ? Array.from(selected || []) : (selected || null) }));
   };
   const handleConfigChange = (key, value) => setConfig((current) => ({ ...current, [key]: value }));
-  return { files, config, handleFileChange, handleConfigChange };
+  const toggleTargetDock = (dock) => {
+    setTargetDocks((current) => {
+      if (!current.includes(dock)) return [...current, dock];
+      if (current.length === 1) return current; // always keep at least one dock selected
+      return current.filter((selected) => selected !== dock);
+    });
+  };
+  return { files, config, targetDocks, handleFileChange, handleConfigChange, toggleTargetDock };
 }
